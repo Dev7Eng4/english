@@ -13,9 +13,14 @@ const ListLineError = ({ onShowDetailError, outputs, activedError }: Props) => {
   return (
     <>
       {outputs.map(opt =>
-        opt.status ? (
+        opt.status === 'false' ? (
           <>
-            <LineError key={opt.id} opt={opt} activedError={activedError} onShowDetailError={onShowDetailError}>
+            <LineError
+              key={opt.id}
+              opt={opt}
+              activedError={activedError}
+              onShowDetailError={onShowDetailError}
+            >
               {/* {opt.subErrors ? (
                 <ListLineError
                   onShowDetailError={onShowDetailError}

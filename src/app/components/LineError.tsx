@@ -1,5 +1,4 @@
 import React from 'react';
-import { getReason } from '../home/page';
 import { IF } from './ListLineError';
 
 interface Props {
@@ -12,7 +11,7 @@ interface Props {
 const LineError = ({ opt, activedError, children, onShowDetailError }: Props) => {
   return (
     <span
-      className={`text-red-500] border-b-red-300 border-b caret-black focus:bg-blue-200 hover:bg-blue-200 ${
+      className={`border-b-red-300 border-b caret-black focus:bg-blue-200 hover:bg-blue-200 ${
         activedError === opt.id ? `bg-blue-200` : ''
       }`}
       id={`${opt.id}`}

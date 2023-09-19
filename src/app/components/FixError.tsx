@@ -1,5 +1,4 @@
 import React from 'react';
-import { getReason } from '../home/page';
 
 interface Props {
   activedError?: number;
@@ -15,7 +14,9 @@ const FixError = ({ activedError, err, handleFixError, handleShowDetailError }: 
 
   return (
     <div
-      className={`card bg-white px-3 py-2 border rounded-xl my-3 ${isActive ? 'bg-gray-400' : 'cursor-pointer'}`}
+      className={`card bg-white px-3 py-2 border rounded-xl my-3 ${
+        isActive ? 'bg-gray-400' : 'cursor-pointer'
+      }`}
       key={err.text}
       onClick={() => handleShowDetailError(err.id)}
     >
@@ -28,7 +29,10 @@ const FixError = ({ activedError, err, handleFixError, handleShowDetailError }: 
           <span className='text-blue-600'>{err.revised_sentence}</span>
           <br />
           {isActive && (
-            <button className='h-8 bg-blue-800 text-white px-3 rounded-md mt-1' onClick={() => handleFixError(err)}>
+            <button
+              className='h-8 bg-blue-800 text-white px-3 rounded-md mt-1'
+              onClick={() => handleFixError(err)}
+            >
               Correct
             </button>
           )}
