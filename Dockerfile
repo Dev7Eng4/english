@@ -6,7 +6,7 @@ WORKDIR /app
 
 COPY package.json pnpm-lock.yaml ./
 
-RUN npm install global pnpm && pnpm i --frozen-lockfile;
+RUN npm install global pnpm && pnpm i;
 
 COPY . .
 
