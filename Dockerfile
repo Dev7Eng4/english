@@ -1,17 +1,15 @@
-FROM node:18-alpine AS base
-
-FROM base AS deps
+FROM node:18-alpine as base
 
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml ./
+COPY package.json package-lock.json ./
 
-RUN npm install global pnpm && pnpm i;
+RUN npm install
 
 COPY . .
 
-RUN pnpm build
+RUN npm run build
+
+CMD npm run start
 
 EXPOSE 3000
-
-CMD [ "pnpm", "start" ]
