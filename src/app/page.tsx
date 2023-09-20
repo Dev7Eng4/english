@@ -11,11 +11,14 @@ import ListLineError from './components/ListLineError';
 import axios from 'axios';
 import LineError from './components/LineError';
 
+const needHidden = 'border-b-red-300 border-b caret-black focus:bg-blue-200 hover:bg-blue-200';
+
 export default function Home() {
   const [content, setContent] = useState('');
   const [activedError, setActivedError] = useState(-1);
   const [response, setResponse] = useState<ResponseText[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [action, setAction] = useState('');
 
   const controllerRef = useRef(new AbortController());
   const previousRef = useRef('');
@@ -32,11 +35,11 @@ export default function Home() {
 
     result.splice(idxFix, 1, {
       ...err,
-      text: err.revised_sentence || '',
       status: 'true',
     });
 
     console.log(1, result);
+    setAction('F');
     setResponse(result);
   };
 
@@ -71,6 +74,8 @@ export default function Home() {
       const res = await fetchCheckData(value, nController.signal);
 
       setResponse(res);
+
+      setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
       if (axios.isCancel(error)) {
@@ -82,48 +87,12 @@ export default function Home() {
   const handleChangeEditor = (evt: ContentEditableEvent) => {
     const value = evt.target.value || '';
 
-    const needHidden = 'border-b-red-300 border-b caret-black focus:bg-blue-200 hover:bg-blue-200';
+    const newValue = value.replaceAll(`<span class="${needHidden}">`, '');
+    const nValue = newValue.replaceAll('</span>', '');
 
-    const newValue = value.replaceAll(needHidden, '');
-
-    console.log('value', value);
-    console.log('textContent', evt.currentTarget.textContent);
-    setContent(newValue);
+    setContent(nValue);
 
     debounceCheck(evt.currentTarget.textContent);
-  };
-
-  const handleOpenDetail = () => {
-    console.log('detail');
-  };
-
-  const handleShowError = async () => {
-    const editor = document.querySelector('#editor');
-
-    const currentValue = editor?.textContent;
-
-    console.log('cu', currentValue);
-
-    if (!currentValue || !response.length) return;
-
-    let convertedValue = currentValue;
-
-    await Promise.resolve(
-      response.forEach(opt => {
-        console.log('opt', opt);
-        console.log('inc', currentValue.includes(opt.text));
-        if (opt.status === 'false' && currentValue.includes(opt.text)) {
-          console.log('inn');
-          convertedValue = convertedValue.replace(
-            opt.text,
-            `<span data-error-id='${opt.id}' class='border-b-2 border-b-red-500 hover:bg-red-400' onclick="handleOpenDetail()">${opt.text}</span>`
-          );
-          console.log('convert', convertedValue);
-        }
-      })
-    );
-
-    setContent(convertedValue);
   };
 
   const handleCheckError = () => {
@@ -135,19 +104,16 @@ export default function Home() {
   useEffect(() => {
     if (response.length === 0) return;
 
-    console.log('2');
-    // const dataShow = renderToString(
-    //   <ListLineError
-    //     outputs={response}
-    //     onShowDetailError={handleShowActiveErrorInLine}
-    //     activedError={activedError}
-    //   />
-    // );
-
     let result = content;
 
+    console.log('content', result);
+
     response.forEach(res => {
-      if (res.status === 'false') {
+      if (res.status === 'true' && res.revised_sentence) {
+        const c = `<span class="${needHidden}">${res.text}</span>`;
+        result = result.replace(c, res.revised_sentence);
+      }
+      if (res.status === 'false' && action !== 'F') {
         const changedText = renderToString(
           <LineError
             key={res.id}
@@ -160,8 +126,9 @@ export default function Home() {
       }
     });
 
+    setAction('');
     setContent(result);
-  }, [response, activedError]);
+  }, [response]);
 
   console.log('active', activedError);
 

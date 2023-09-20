@@ -11,10 +11,7 @@ interface Props {
 const LineError = ({ opt, activedError, children, onShowDetailError }: Props) => {
   return (
     <span
-      className={`border-b-red-300 border-b caret-black focus:bg-blue-200 hover:bg-blue-200 ${
-        activedError === opt.id ? `bg-blue-200` : ''
-      }`}
-      id={`${opt.id}`}
+      className={`border-b-red-300 border-b caret-black focus:bg-blue-200 hover:bg-blue-200`}
       key={opt.id}
       onClick={onShowDetailError(opt.id)}
       // autoFocus={opt.id === 1}
