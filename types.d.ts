@@ -17,6 +17,6 @@ type ResponseText = {
   id: number;
   kind_of_error: string[];
   revised_sentence: string;
-  status: 'true' | 'false';
+  status: string;
   text: string;
 };

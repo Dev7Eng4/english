@@ -125,6 +125,8 @@ export default function Home() {
     setContent(result);
   }, [response]);
 
+  console.log('active', activedError);
+
   return (
     <main className='w-screen h-screen flex bg-white'>
       <div id='editor' className='p-4 w-1/2'>
