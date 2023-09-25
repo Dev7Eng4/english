@@ -80,6 +80,49 @@ const Grammar = () => {
     setActiveError(id);
   };
 
+  const handleRemoveBreak = (value: string) => {
+    console.log('line', value);
+
+    const length = value.length;
+
+    console.log('length', length);
+
+    if (length <= 2) return value;
+
+    return value.slice(0, Math.ceil(length / 2));
+  };
+
+  const handleConvertText = (value: string) => {
+    // this is first line\n\n\nthis is second line\n\n\n\n\nthis is third line
+
+    // this is first linethis is first linethis is second line\n\n\nthis is third line\n\n\n\n\n
+
+    const breakRegex = /[\n]+/;
+    const notBreakRegex = /[^\n]+/;
+
+    const breakLines = value.split(notBreakRegex);
+    const breakTexts = value.split(breakRegex);
+
+    // ['', '\n\n\n', '\n\n\n\n\n', ''];
+    // ['this is first line', 'this is second line', 'this is third line'];
+
+    // ['\n\n', '\n\n\n', ''];
+    // ['', 'this is', 'this'];
+
+    // console.log('lines', breakLines);
+    // console.log('breaks', breakTexts);
+
+    const isStartWithBreak = value.startsWith('\n');
+
+    let result = '';
+
+    breakLines.forEach((line, idx) => {
+      result += `${handleRemoveBreak(line)}${breakTexts[isStartWithBreak ? idx + 1 : idx] ?? ''}`;
+    });
+
+    return result;
+  };
+
   const handleCheckContent = async (value: string) => {
     try {
       if (!value) return;
@@ -142,7 +185,8 @@ const Grammar = () => {
     }
 
     // setContent(evt.target.value || '');
-    debounceCheck(textValue);
+    debounceCheck(handleConvertText(textValue));
+    // debounceCheck(textValue);
   };
 
   // const handleInputEditor = (evt: FormEvent<HTMLDivElement>) => {
