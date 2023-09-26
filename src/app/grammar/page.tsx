@@ -31,7 +31,7 @@ const Grammar = () => {
 
   const handleAdd = useCallback(() => {
     const errorLines = document.querySelectorAll('.error-line');
-    console.log('add', errorLines);
+    // console.log('add', errorLines);
 
     if (errorLines.length === 0) return;
 
@@ -55,7 +55,7 @@ const Grammar = () => {
   const handleFixError = (error: ResponseText) => {
     const fixedError = checkedData.find(data => data.id === error.id);
 
-    console.log('error', fixedError);
+    // console.log('error', fixedError);
     if (!fixedError) return;
 
     const fixedData = checkedData.map(data =>
@@ -67,11 +67,17 @@ const Grammar = () => {
           }
         : data
     );
-    console.log('conte', fixedData);
+    // console.log('conte', fixedData);
 
-    const nContent = renderToString(<ParagraphText activeError={activeError} data={fixedData} onShowErrorDetail={handleShowDetailError} />);
+    const nContent = renderToString(
+      <ParagraphText
+        activeError={activeError}
+        data={fixedData}
+        onShowErrorDetail={handleShowDetailError}
+      />
+    );
 
-    setContent(nContent);
+    setContent(nContent.replaceAll('<br/>', '<br>'));
     setCheckedData(fixedData);
     setActiveError(-1);
   };
@@ -81,11 +87,11 @@ const Grammar = () => {
   };
 
   const handleRemoveBreak = (value: string) => {
-    console.log('line', value);
+    // console.log('line', value);
 
     const length = value.length;
 
-    console.log('length', length);
+    // console.log('length', length);
 
     if (length <= 2) return value;
 
@@ -133,7 +139,7 @@ const Grammar = () => {
         controllerRef.current.abort();
       }
 
-      console.log('content inside', value.includes('\n'));
+      // console.log('content inside', value.includes('\n'));
 
       const controller = new AbortController();
 
@@ -141,10 +147,18 @@ const Grammar = () => {
 
       const res = await fetchCheckData(value, controller.signal);
 
-      const nContent = renderToString(<ParagraphText activeError={activeError} data={res} onShowErrorDetail={handleShowDetailError} />);
+      const nContent = renderToString(
+        <ParagraphText
+          activeError={activeError}
+          data={res}
+          onShowErrorDetail={handleShowDetailError}
+        />
+      );
 
-      setContent(nContent);
-      console.log('ref', res);
+      console.log('conttt', nContent);
+
+      setContent(nContent.replaceAll('<br/>', '<br>'));
+      // console.log('ref', res);
       setIsLoading(false);
       setCheckedData(res);
     } catch (error) {
@@ -166,19 +180,25 @@ const Grammar = () => {
     //   });
     // }
 
-    const textValue = evt.currentTarget.innerText;
+    const textValue = evt.currentTarget.innerText as string;
+
+    console.log('chang 1', textValue);
 
     if (textValue === previousRef.current) return;
+    console.log('chang 2', previousRef.current);
+
     // console.log('change', textValue);
     // console.log('contttttt', evt.target.value);
 
-    controllerRef.current.abort();
     previousRef.current = textValue;
 
     if (evt.target.value === content) return;
+    console.log('chang 3', evt.target.value);
+    console.log('change 4', content);
+    controllerRef.current.abort();
 
     if (checkedData.length > 0) {
-      setContent(textValue);
+      setContent(evt.target.value.replaceAll('error-line', ''));
       setCheckedData([]);
     } else {
       setContent(evt.target.value);
@@ -201,7 +221,9 @@ const Grammar = () => {
 
   return (
     <div className='h-screen'>
-      <header className='sticky top-0 p-4 bg-blue-500 text-white font-semibold'>Grammar check</header>
+      <header className='sticky top-0 p-4 bg-blue-500 text-white font-semibold'>
+        Grammar check
+      </header>
 
       <div className='mt-8 pb-6 flex flex-col lg:flex-row gap-4'>
         <ContentEditable
@@ -229,7 +251,9 @@ const Grammar = () => {
             <div className='flex flex-col items-center mt-8'>
               <Image priority src={notificationIcon} alt='Nothing to check yet' />
               <h3 className='text-lg font-semibold mb-2 text-center'>Nothing to check yet!</h3>
-              <p className='text-gray-500 w-4/5 text-center'>Start writing or upload a document to see Grammar feedback.</p>
+              <p className='text-gray-500 w-4/5 text-center'>
+                Start writing or upload a document to see Grammar feedback.
+              </p>
             </div>
           )}
 

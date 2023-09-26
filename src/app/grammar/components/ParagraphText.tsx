@@ -8,19 +8,23 @@ interface Props {
 }
 
 const ParagraphText = ({ data, activeError, onShowErrorDetail }: Props) => {
+  console.log('data', data);
   return (
     <>
       {data.map(line =>
         line.status === 'true' ? (
           line.text === '\n' ? (
-            // <div>
             <br />
           ) : (
-            // </div>
             line.text
           )
         ) : (
-          <LineError key={line.id} activeError={activeError} error={line} onShowErrorDetail={onShowErrorDetail} />
+          <LineError
+            key={line.id}
+            activeError={activeError}
+            error={line}
+            onShowErrorDetail={onShowErrorDetail}
+          />
         )
       )}
     </>
