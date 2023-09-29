@@ -3,7 +3,7 @@
 import axios from 'axios';
 import { debounce } from 'lodash';
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable';
 import { renderToString } from 'react-dom/server';
 
@@ -24,6 +24,7 @@ const Grammar = () => {
   const previousRef = useRef('');
   const editorRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef(new AbortController());
+  const cursorRef = useRef(null);
 
   const isExistsError = useMemo(() => {
     return checkedData.length > 0 && checkedData.findIndex(data => data.status === 'false') === -1;
@@ -169,6 +170,7 @@ const Grammar = () => {
   };
 
   const handleChangeEditor = (evt: ContentEditableEvent) => {
+    console.log('change');
     // console.log('text', evt.currentTarget.textContent);
     // if (editorRef.current) {
     //   const eles = editorRef.current?.querySelectorAll('div');
@@ -190,15 +192,18 @@ const Grammar = () => {
     // console.log('change', textValue);
     // console.log('contttttt', evt.target.value);
 
-    previousRef.current = textValue;
+    previousRef.current = handleConvertText(textValue);
 
     if (evt.target.value === content) return;
     console.log('chang 3', evt.target.value);
     console.log('change 4', content);
     controllerRef.current.abort();
 
+    const ele = document.querySelector('#editor');
+
     if (checkedData.length > 0) {
-      setContent(evt.target.value.replaceAll('error-line', ''));
+      // setContent(evt.target.value.replaceAll('error-line', ''));
+      setContent(textValue);
       setCheckedData([]);
     } else {
       setContent(evt.target.value);
@@ -209,30 +214,53 @@ const Grammar = () => {
     // debounceCheck(textValue);
   };
 
-  // const handleInputEditor = (evt: FormEvent<HTMLDivElement>) => {
-  //   console.log('input', evt.currentTarget.textContent);
-  // };
+  const handleKeyDown = () => {
+    setContent(editorRef.current?.innerHTML || '');
+    console.log('down', editorRef.current?.innerText);
+  };
+
+  const handleInputEditor = (evt: FormEvent<HTMLDivElement>) => {
+    console.log('innn', evt);
+    console.log('input', evt.currentTarget.textContent);
+  };
+
+  const handleToggleShowLineError = (e: ChangeEvent<HTMLInputElement>) => {
+    const isCheck = e.target.checked;
+    // console.log('aa', editorRef.current.);
+
+    if (isCheck) {
+    }
+  };
 
   const debounceCheck = useCallback(debounce(handleCheckContent, 1000), []);
 
   useEffect(() => {
-    // handleAdd();
+    handleAdd();
+    // previousRef.current = editorRef.current?.innerText || '';
   }, [checkedData, activeError, handleAdd]);
 
   return (
     <div className='h-screen'>
       <header className='sticky top-0 p-4 bg-blue-500 text-white font-semibold'>
         Grammar check
+        <input
+          type='checkbox'
+          name='show'
+          id='show-line-error'
+          onChange={handleToggleShowLineError}
+        />
       </header>
 
       <div className='mt-8 pb-6 flex flex-col lg:flex-row gap-4'>
         <ContentEditable
+          id='editor'
           className='lg:w-1/2 min-h-[calc(100vh-112px)] mx-4 py-3 px-4 border border-gray-300 outline-none rounded-lg'
           innerRef={editorRef}
           html={content}
           disabled={false}
           onChange={handleChangeEditor}
-          // onInput={handleInputEditor}
+          onKeyDown={handleKeyDown}
+          onInput={handleInputEditor}
           data-gramm={false}
           data-gramm_editor={false}
           data-enable-grammarly={false}

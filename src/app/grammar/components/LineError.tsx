@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FormEvent } from 'react';
 
 interface Props {
   error: ResponseText;
@@ -11,8 +11,20 @@ const LineError = ({ error, activeError, onShowErrorDetail }: Props) => {
     onShowErrorDetail(error.id);
   };
 
+  const handleInput = (e: FormEvent<HTMLSpanElement>) => {
+    e.stopPropagation();
+    e.preventDefault();
+    console.log('aa');
+  };
+
   return (
-    <span className='error-line' onClick={handleShowDetail} data-mark-id={error.id}>
+    <span
+      contentEditable
+      onInput={handleInput}
+      className='error-line'
+      onClick={handleShowDetail}
+      data-mark-id={error.id}
+    >
       {error.text}
     </span>
   );
