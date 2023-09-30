@@ -24,8 +24,13 @@ const Suggestion = ({ activeError, error, onFixError, onShowDetailError }: Props
   };
 
   return (
-    <div className={`border border-gray-300 py-2 px-4 mb-2 rounded-md ${isActive ? '' : 'cursor-pointer'}`} onClick={handleShowDetailError}>
-      <p className='text-gray-500 text-lg'>{error.kind_of_error.join(', ')}</p>
+    <div
+      className={`border border-gray-300 py-2 px-4 mb-2 rounded-md transition-all ${isActive ? '' : 'cursor-pointer'}`}
+      onClick={handleShowDetailError}
+    >
+      <p className='text-gray-500 text-lg'>
+        {typeof error.kind_of_error === 'string' ? error.kind_of_error : error.kind_of_error.join(', ')}
+      </p>
 
       <span className={`${isActive ? 'text-red-500 line-through' : ''}`}>{error.text}</span>
       {isActive && (

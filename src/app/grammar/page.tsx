@@ -3,23 +3,34 @@
 import axios from 'axios';
 import { debounce } from 'lodash';
 import Image from 'next/image';
+<<<<<<< HEAD
 import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+=======
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+>>>>>>> c90d3c93b9fb8e3070eabb5b98b492f40da84090
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable';
 import { renderToString } from 'react-dom/server';
 
 import loadingIcon from '@/app/assets/loading.svg';
 import notificationIcon from '@/app/assets/notification.png';
 import correctIcon from '@/app/assets/correct.png';
+import moveLeftIcon from '@/app/assets/move-left.svg';
+import moveRightIcon from '@/app/assets/move-right.svg';
 
 import { fetchCheckData } from '../services/api';
 import ParagraphText from './components/ParagraphText';
 import Suggestion from './components/Suggestion';
+import Switch from './components/Switch';
+
+const PLACEHOLDER = '';
 
 const Grammar = () => {
   const [content, setContent] = useState('');
+  const [showPlaceholder, setShowPlaceholder] = useState(true);
   const [activeError, setActiveError] = useState(-1);
   const [checkedData, setCheckedData] = useState<ResponseText[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showAssistant, setShowAssistant] = useState(true);
 
   const previousRef = useRef('');
   const editorRef = useRef<HTMLDivElement>(null);
@@ -70,13 +81,7 @@ const Grammar = () => {
     );
     // console.log('conte', fixedData);
 
-    const nContent = renderToString(
-      <ParagraphText
-        activeError={activeError}
-        data={fixedData}
-        onShowErrorDetail={handleShowDetailError}
-      />
-    );
+    const nContent = renderToString(<ParagraphText activeError={activeError} data={fixedData} onShowErrorDetail={handleShowDetailError} />);
 
     setContent(nContent.replaceAll('<br/>', '<br>'));
     setCheckedData(fixedData);
@@ -88,11 +93,7 @@ const Grammar = () => {
   };
 
   const handleRemoveBreak = (value: string) => {
-    // console.log('line', value);
-
     const length = value.length;
-
-    // console.log('length', length);
 
     if (length <= 2) return value;
 
@@ -100,24 +101,11 @@ const Grammar = () => {
   };
 
   const handleConvertText = (value: string) => {
-    // this is first line\n\n\nthis is second line\n\n\n\n\nthis is third line
-
-    // this is first linethis is first linethis is second line\n\n\nthis is third line\n\n\n\n\n
-
     const breakRegex = /[\n]+/;
     const notBreakRegex = /[^\n]+/;
 
     const breakLines = value.split(notBreakRegex);
     const breakTexts = value.split(breakRegex);
-
-    // ['', '\n\n\n', '\n\n\n\n\n', ''];
-    // ['this is first line', 'this is second line', 'this is third line'];
-
-    // ['\n\n', '\n\n\n', ''];
-    // ['', 'this is', 'this'];
-
-    // console.log('lines', breakLines);
-    // console.log('breaks', breakTexts);
 
     const isStartWithBreak = value.startsWith('\n');
 
@@ -140,26 +128,15 @@ const Grammar = () => {
         controllerRef.current.abort();
       }
 
-      // console.log('content inside', value.includes('\n'));
-
       const controller = new AbortController();
 
       controllerRef.current = controller;
 
       const res = await fetchCheckData(value, controller.signal);
 
-      const nContent = renderToString(
-        <ParagraphText
-          activeError={activeError}
-          data={res}
-          onShowErrorDetail={handleShowDetailError}
-        />
-      );
-
-      console.log('conttt', nContent);
+      const nContent = renderToString(<ParagraphText activeError={activeError} data={res} onShowErrorDetail={handleShowDetailError} />);
 
       setContent(nContent.replaceAll('<br/>', '<br>'));
-      // console.log('ref', res);
       setIsLoading(false);
       setCheckedData(res);
     } catch (error) {
@@ -184,6 +161,8 @@ const Grammar = () => {
 
     const textValue = evt.currentTarget.innerText as string;
 
+    setShowPlaceholder(textValue.length === 0);
+
     console.log('chang 1', textValue);
 
     if (textValue === previousRef.current) return;
@@ -205,6 +184,7 @@ const Grammar = () => {
       // setContent(evt.target.value.replaceAll('error-line', ''));
       setContent(textValue);
       setCheckedData([]);
+      setActiveError(-1);
     } else {
       setContent(evt.target.value);
     }
@@ -214,6 +194,7 @@ const Grammar = () => {
     // debounceCheck(textValue);
   };
 
+<<<<<<< HEAD
   const handleKeyDown = () => {
     setContent(editorRef.current?.innerHTML || '');
     console.log('down', editorRef.current?.innerText);
@@ -231,6 +212,27 @@ const Grammar = () => {
     if (isCheck) {
     }
   };
+=======
+  const handleInputEditor = (evt: FormEvent<HTMLDivElement>) => {
+    const selection = window.getSelection();
+
+    if (selection?.rangeCount && selection?.rangeCount > 0) {
+      const range = selection?.getRangeAt(0);
+      const container = range?.commonAncestorContainer;
+
+      if (container?.nodeType === 3 && container.parentNode?.nodeName === 'span') {
+        range?.setStart(container, 9);
+        range?.setEnd(container, 10);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    }
+  };
+
+  const handleToggleAssistant = () => {
+    setShowAssistant(prev => !prev);
+  };
+>>>>>>> c90d3c93b9fb8e3070eabb5b98b492f40da84090
 
   const debounceCheck = useCallback(debounce(handleCheckContent, 1000), []);
 
@@ -241,6 +243,7 @@ const Grammar = () => {
 
   return (
     <div className='h-screen'>
+<<<<<<< HEAD
       <header className='sticky top-0 p-4 bg-blue-500 text-white font-semibold'>
         Grammar check
         <input
@@ -249,24 +252,57 @@ const Grammar = () => {
           id='show-line-error'
           onChange={handleToggleShowLineError}
         />
+=======
+      <header className='sticky top-0 p-4 flex justify-between items-center bg-blue-500 text-white'>
+        <h3 className='font-semibold'>Grammar check</h3>
+
+        <div className='flex gap-2'>
+          {/* <Switch /> */}
+          <button
+            className={`group relative flex items-center justify-center w-[165px] bg-orange-400 py-1.5 rounded-3xl hover:bg-orange-500 transition-all ${
+              showAssistant ? 'pr-2' : 'pl-2'
+            }`}
+            onClick={handleToggleAssistant}
+          >
+            {!showAssistant && (
+              <Image src={moveLeftIcon} alt='Show Assistant' className='absolute left-2.5 w-4 h-4 text-white mr-1 transition-all' />
+            )}
+            {showAssistant ? 'Hide' : 'Show'} Assistant
+            {showAssistant && (
+              <Image src={moveRightIcon} alt='Hide Assistant' className='absolute right-3 w-4 h-4 text-white ml-1 transition-all' />
+            )}
+          </button>
+        </div>
+>>>>>>> c90d3c93b9fb8e3070eabb5b98b492f40da84090
       </header>
 
-      <div className='mt-8 pb-6 flex flex-col lg:flex-row gap-4'>
+      <div className='relative mt-8 pb-6 flex flex-col lg:flex-row gap-4'>
         <ContentEditable
+<<<<<<< HEAD
           id='editor'
           className='lg:w-1/2 min-h-[calc(100vh-112px)] mx-4 py-3 px-4 border border-gray-300 outline-none rounded-lg'
+=======
+          className={`min-h-[calc(100vh-112px)] mx-4 py-3 px-4 z-10 border border-gray-300 outline-none rounded-lg ${
+            showAssistant ? 'lg:w-1/2' : 'lg:w-3/4 mx-auto'
+          }`}
+>>>>>>> c90d3c93b9fb8e3070eabb5b98b492f40da84090
           innerRef={editorRef}
           html={content}
           disabled={false}
           onChange={handleChangeEditor}
+<<<<<<< HEAD
           onKeyDown={handleKeyDown}
+=======
+>>>>>>> c90d3c93b9fb8e3070eabb5b98b492f40da84090
           onInput={handleInputEditor}
           data-gramm={false}
           data-gramm_editor={false}
           data-enable-grammarly={false}
         />
 
-        <div className='lg:w-1/2 p-4 flex flex-col'>
+        {showPlaceholder && <div className='absolute top-3 left-8 text-gray-400'>Type or paste (Ctrl + V) your text.</div>}
+
+        <div className={`p-4 flex flex-col ${showAssistant ? 'lg:w-1/2' : 'lg:w-0 hidden'}`}>
           <h3 className='font-semibold text-blue-700 text-xl text-center pb-8'>Suggestions</h3>
 
           {isLoading && (
@@ -279,9 +315,7 @@ const Grammar = () => {
             <div className='flex flex-col items-center mt-8'>
               <Image priority src={notificationIcon} alt='Nothing to check yet' />
               <h3 className='text-lg font-semibold mb-2 text-center'>Nothing to check yet!</h3>
-              <p className='text-gray-500 w-4/5 text-center'>
-                Start writing or upload a document to see Grammar feedback.
-              </p>
+              <p className='text-gray-500 w-4/5 text-center'>Start writing or upload a document to see Grammar feedback.</p>
             </div>
           )}
 
@@ -304,6 +338,8 @@ const Grammar = () => {
               />
             ))}
         </div>
+
+        <div></div>
       </div>
     </div>
   );
