@@ -12,12 +12,15 @@ import notificationIcon from '@/app/assets/notification.png';
 import correctIcon from '@/app/assets/correct.png';
 import moveLeftIcon from '@/app/assets/move-left.svg';
 import moveRightIcon from '@/app/assets/move-right.svg';
-import rightArrowIcon from '@/app/assets/right-arrow.svg';
 
 import { fetchCheckData } from '../services/api';
 import ParagraphText from './components/ParagraphText';
 import Suggestion from './components/Suggestion';
 import Switch from './components/Switch';
+import GoalSetting from './components/GoalSetting';
+import PerformanceScore from './components/PerformanceScore';
+import NothingSvgIcon from '../components/icons/NothingSvgIcon';
+import CorrectSvgIcon from '../components/icons/CorrectSvgIcon';
 
 const PLACEHOLDER = '';
 
@@ -28,6 +31,7 @@ const Grammar = () => {
   const [checkedData, setCheckedData] = useState<ResponseText[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showAssistant, setShowAssistant] = useState(true);
+  const [suggestion, setSuggestion] = useState('');
 
   const previousRef = useRef('');
   const editorRef = useRef<HTMLDivElement>(null);
@@ -36,6 +40,10 @@ const Grammar = () => {
 
   const isExistsError = useMemo(() => {
     return checkedData.length > 0 && checkedData.findIndex(data => data.status === 'false') === -1;
+  }, [checkedData]);
+
+  const totalSuggestions = useMemo(() => {
+    return checkedData.filter(data => data.status === 'false').length;
   }, [checkedData]);
 
   const handleAdd = useCallback(() => {
@@ -78,13 +86,7 @@ const Grammar = () => {
     );
     // console.log('conte', fixedData);
 
-    const nContent = renderToString(
-      <ParagraphText
-        activeError={activeError}
-        data={fixedData}
-        onShowErrorDetail={handleShowDetailError}
-      />
-    );
+    const nContent = renderToString(<ParagraphText activeError={activeError} data={fixedData} onShowErrorDetail={handleShowDetailError} />);
 
     setContent(nContent.replaceAll('<br/>', '<br>'));
     setCheckedData(fixedData);
@@ -137,13 +139,7 @@ const Grammar = () => {
 
       const res = await fetchCheckData(value, controller.signal);
 
-      const nContent = renderToString(
-        <ParagraphText
-          activeError={activeError}
-          data={res}
-          onShowErrorDetail={handleShowDetailError}
-        />
-      );
+      const nContent = renderToString(<ParagraphText activeError={activeError} data={res} onShowErrorDetail={handleShowDetailError} />);
 
       setContent(nContent.replaceAll('<br/>', '<br>'));
       setIsLoading(false);
@@ -236,6 +232,10 @@ const Grammar = () => {
     setShowAssistant(prev => !prev);
   };
 
+  const handleChangeSuggestion = (suggestionType: string) => () => {
+    setSuggestion(suggestionType);
+  };
+
   const debounceCheck = useCallback(debounce(handleCheckContent, 1000), []);
 
   useEffect(() => {
@@ -245,32 +245,32 @@ const Grammar = () => {
 
   return (
     <div className='h-screen flex'>
-      <div className='grow w-1/2'>
-        <header className='sticky top-0 p-4 flex justify-between items-center bg-blue-500 text-white'>
-          <h3 className='font-semibold'>Grammar check</h3>
+      <div className={`grow max-w-[calc(100%-${showAssistant ? '224px' : '0px'})] transition-all`}>
+        <header className='sticky top-0 h-16 p-4 px-8 flex justify-between items-center'>
+          <h2 className='text-xl font-semibold'>Grammar check</h2>
 
-          <div className='flex gap-2'>
-            <button
-              className={`group relative flex items-center justify-center bg-orange-400 px-4 py-1.5 text-xs uppercase font-semibold tracking-wide rounded-3xl hover:bg-orange-500 transition-all ${
-                showAssistant ? '' : ''
-              }`}
-              onClick={handleToggleAssistant}
-            >
-              {showAssistant ? 'Hide Assistant' : 'Correct with assistant'}
-              {showAssistant && (
-                <Image
-                  src={moveRightIcon}
-                  alt='Hide Assistant'
-                  className='w-3 h-3 text-white ml-1'
-                />
+          {showAssistant ? (
+            <h2 className='w-1/2 text-xl text-center font-semibold'>
+              {totalSuggestions > 0 && (
+                <span className='inline-flex justify-center items-center mr-2 w-8 h-8 bg-teal-600 rounded-full'>{totalSuggestions}</span>
               )}
-            </button>
-          </div>
+              All suggestions
+            </h2>
+          ) : (
+            <div className={`${showAssistant ? 'hidden' : 'flex'}`}>
+              <button
+                className={`group relative flex items-center justify-center bg-orange-400 px-4 py-1.5 text-xs uppercase font-semibold tracking-wide rounded-3xl hover:bg-orange-500 transition-all`}
+                onClick={handleToggleAssistant}
+              >
+                Correct with assistant
+              </button>
+            </div>
+          )}
         </header>
 
         <div className='relative mt-8 pb-6 flex flex-col lg:flex-row gap-4'>
           <ContentEditable
-            className={`min-h-[calc(100vh-112px)] mx-4 py-3 px-4 z-10 border border-gray-300 outline-none rounded-lg ${
+            className={`min-h-[calc(100vh-112px)] mx-4 py-3 px-4 z-10 outline-none rounded-lg ${
               showAssistant ? 'lg:w-1/2' : 'lg:w-3/4 mx-auto'
             }`}
             innerRef={editorRef}
@@ -279,23 +279,20 @@ const Grammar = () => {
             onChange={handleChangeEditor}
             onKeyDown={handleKeyDown}
             onInput={handleInputEditor}
+            autoFocus={true}
             data-gramm={false}
             data-gramm_editor={false}
             data-enable-grammarly={false}
           />
 
           {showPlaceholder && (
-            <div
-              className={`absolute top-3 left-8 text-gray-400 ${
-                showAssistant ? 'left-8' : 'left-0 pl-[calc(12.5%+8px)]'
-              }`}
-            >
+            <div className={`absolute top-3 left-8 text-gray-400 ${showAssistant ? 'left-8' : 'left-0 pl-[calc(12.5%+8px)]'}`}>
               Type or paste (Ctrl + V) your text.
             </div>
           )}
 
-          <div className={`p-4 flex flex-col ${showAssistant ? 'lg:w-1/4' : 'lg:w-0 hidden'}`}>
-            <h3 className='font-semibold text-blue-700 text-xl text-center pb-8'>Suggestions</h3>
+          <div className={`p-4 flex flex-col ${showAssistant ? 'lg:w-1/2' : 'lg:w-0 hidden'}`}>
+            {/* <h3 className='font-semibold text-blue-700 text-xl text-center pb-8'>Suggestions</h3> */}
 
             {isLoading && (
               <div className='flex justify-center mt-8'>
@@ -304,18 +301,16 @@ const Grammar = () => {
             )}
 
             {!content && (
-              <div className='flex flex-col items-center mt-8'>
-                <Image priority src={notificationIcon} alt='Nothing to check yet' />
-                <h3 className='text-lg font-semibold mb-2 text-center'>Nothing to check yet!</h3>
-                <p className='text-gray-500 w-4/5 text-center'>
-                  Start writing or upload a document to see Grammar feedback.
-                </p>
+              <div className='flex flex-col items-center self-center my-auto pb-40'>
+                <NothingSvgIcon />
+                <h3 className='text-lg font-semibold mt-4 mb-2 text-center'>Nothing to check yet!</h3>
+                <p className='text-gray-500 w-4/5 text-center'>Start writing or upload a document to see Grammar feedback.</p>
               </div>
             )}
 
             {isExistsError && (
-              <div className='flex flex-col items-center mt-8'>
-                <Image priority src={correctIcon} alt='Everything is good' className='w-20' />
+              <div className='flex flex-col items-center self-center my-auto pb-40'>
+                <CorrectSvgIcon />
                 <h3 className='mt-4 text-lg font-semibold mb-2 text-center'>You are good to go</h3>
               </div>
             )}
@@ -335,7 +330,11 @@ const Grammar = () => {
         </div>
       </div>
 
-      <div className='flex flex-col gap-4 w-56 shrink-0 shadow-lg py-4 px-4 border-l-gray-300 border-l'>
+      <div
+        className={`fixed top-0 h-screen flex flex-col gap-4 w-56 shrink-0 shadow-lg py-4 px-4 bg-white border-l-gray-300 border-l z-50 transition-all ${
+          showAssistant ? 'right-0' : 'right-[-224px]'
+        }`}
+      >
         <button
           className='group relative flex items-center justify-center mx-auto mb-4 bg-gray-200 text-gray-500 px-4 py-1.5 text-xs uppercase font-semibold tracking-wide rounded-3xl hover:bg-gray-300 transition-colors'
           onClick={handleToggleAssistant}
@@ -344,25 +343,32 @@ const Grammar = () => {
           <Image src={moveRightIcon} alt='Hide Assistant' className='w-3 h-3 text-white ml-1' />
         </button>
 
-        <div className='group flex items-center justify-between p-2 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-100'>
-          <span>
-            <strong className='mr-1'>74</strong>
-            Overall score
-          </span>
-          <Image
-            src={rightArrowIcon}
-            alt='Right Arrow'
-            className='w-6 h-6 group-hover:text-blue-300'
-          />
-        </div>
+        <PerformanceScore />
 
-        <div className='group flex items-center justify-between p-2 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-100'>
-          <span>Goals</span>
-          <Image
-            src={rightArrowIcon}
-            alt='Right Arrow'
-            className='w-6 h-6 group-hover:text-blue-300'
-          />
+        <GoalSetting />
+
+        <hr className='mb-4' />
+
+        <div className='flex flex-col gap-y-2'>
+          <div
+            className={`group flex items-center justify-between p-4 rounded-md font-medium cursor-pointer border transition-all hover:bg-gray-100 ${
+              suggestion ? 'border-white' : 'border-blue-600 text-blue-600'
+            }`}
+            onClick={handleChangeSuggestion('')}
+          >
+            All suggestions
+          </div>
+          <div
+            className={`p-4 rounded-md cursor-pointer transition-all border hover:bg-gray-100 ${
+              suggestion === 'C' ? 'border-blue-600 text-blue-600' : 'border-white'
+            }`}
+            onClick={handleChangeSuggestion('C')}
+          >
+            <span className='font-medium'>Correctness</span>
+            <div className='mt-2 w-full bg-gray-200 rounded-full h-1 dark:bg-gray-700'>
+              <div className={`bg-red-600 h-1 rounded-full w-3/4`}></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

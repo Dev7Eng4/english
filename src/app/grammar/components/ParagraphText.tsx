@@ -19,12 +19,7 @@ const ParagraphText = ({ data, activeError, onShowErrorDetail }: Props) => {
             line.text
           )
         ) : (
-          <LineError
-            key={line.id}
-            activeError={activeError}
-            error={line}
-            onShowErrorDetail={onShowErrorDetail}
-          />
+          <LineError key={line.id} activeError={activeError} error={line} onShowErrorDetail={onShowErrorDetail} />
         )
       )}
     </>

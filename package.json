@@ -28,6 +28,7 @@
     "typescript": "5.2.2"
   },
   "devDependencies": {
-    "@types/lodash": "4.14.198"
+    "@types/lodash": "4.14.198",
+    "sass": "^1.68.0"
   }
 }

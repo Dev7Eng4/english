@@ -20,3 +20,20 @@ type ResponseText = {
   status: string;
   text: string;
 };
+
+interface ILevel {
+  id: string;
+  label: string;
+  description?: string;
+  isDefault?: boolean;
+}
+
+interface ISetting {
+  id: string;
+  key: 'audience' | 'formality' | 'domain' | 'intent';
+  type: string;
+  label: string;
+  isPremium?: boolean;
+  description?: string;
+  levels: ILevel[];
+}
