@@ -77,7 +77,8 @@ const mock: ISetting[] = [
       {
         id: '33',
         label: 'General',
-        description: 'Get customized suggestions for business writing, academic assignments, and more.',
+        description:
+          'Get customized suggestions for business writing, academic assignments, and more.',
         isDefault: true,
       },
       {
@@ -99,7 +100,8 @@ const mock: ISetting[] = [
     key: 'intent',
     type: 'I',
     label: 'Intent',
-    description: "Experimental. What are you trying to do? This helps us build new suggestions and won't affect your feedback today.",
+    description:
+      "Experimental. What are you trying to do? This helps us build new suggestions and won't affect your feedback today.",
     levels: [
       {
         id: '41',
@@ -137,7 +139,10 @@ const GoalSetting = () => {
 
   const numberOfSettings = useMemo(() => {
     return Object.keys(settings).reduce(
-      (sum, key) => (typeof settings[key as IKeySetting] !== 'boolean' && settings[key as IKeySetting] ? sum + 1 : sum),
+      (sum, key) =>
+        typeof settings[key as IKeySetting] !== 'boolean' && settings[key as IKeySetting]
+          ? sum + 1
+          : sum,
       0
     );
   }, [settings]);
@@ -175,7 +180,7 @@ const GoalSetting = () => {
   return (
     <>
       <div
-        className='group flex items-center justify-between px-4 py-2 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-100'
+        className='group flex items-center justify-between pl-4 pr-2 py-2 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-100'
         onClick={handleOpenGoalSettings}
       >
         <div>
@@ -183,7 +188,11 @@ const GoalSetting = () => {
           <br />
           <span>{numberOfSettings} of 4 set</span>
         </div>
-        <Image src={rightArrowIcon} alt='Right Arrow' className='w-6 h-6 group-hover:text-blue-300' />
+        <Image
+          src={rightArrowIcon}
+          alt='Right Arrow'
+          className='w-6 h-6 group-hover:text-blue-300'
+        />
       </div>
 
       <Transition
@@ -191,7 +200,7 @@ const GoalSetting = () => {
         show={isOpen}
         as={Fragment}
       >
-        <Dialog as='div' className='relative z-10' open={isOpen} onClose={handleClose}>
+        <Dialog as='div' className='relative z-50' open={isOpen} onClose={handleClose}>
           <Transition.Child
             as={Fragment}
             enter='ease-out duration-300'
@@ -235,7 +244,11 @@ const GoalSetting = () => {
                     {mock.map(m => (
                       <div key={m.id}>
                         <hr className='my-3' />
-                        <LevelTab setting={m} value={settings[m.key]} onChange={handleChangeSetting} />
+                        <LevelTab
+                          setting={m}
+                          value={settings[m.key]}
+                          onChange={handleChangeSetting}
+                        />
                       </div>
                     ))}
                   </div>
@@ -251,7 +264,8 @@ const GoalSetting = () => {
                         className='h-3.5 w-3.5 rounded border-gray-300 cursor-pointer text-indigo-600 focus:ring-indigo-600'
                       />
                       <label htmlFor='comments' className='text-gray-400 text-xs cursor-pointer'>
-                        Show <span className='text-gray-700'>Set Goals</span> when I start a new document
+                        Show <span className='text-gray-700'>Set Goals</span> when I start a new
+                        document
                       </label>
                     </div>
 
@@ -262,7 +276,10 @@ const GoalSetting = () => {
                       >
                         Reset to defaults
                       </button>
-                      <button className='px-3 py-1.5 rounded-md text-sm bg-blue-600 text-white' onClick={handleSaveSettings}>
+                      <button
+                        className='px-3 py-1.5 rounded-md text-sm bg-blue-600 text-white'
+                        onClick={handleSaveSettings}
+                      >
                         Done
                       </button>
                     </div>

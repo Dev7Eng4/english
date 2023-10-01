@@ -4,8 +4,14 @@
 
 @layer components {
   .error-line {
-    border-bottom: 1px solid red;
+    border-bottom: 2px solid rgb(200, 24, 24);
     caret-color: black;
+  }
+
+  .scrollbar-invisible {
+    &::-webkit-scrollbar {
+      width: 0px;
+    }
   }
 
   .scrollbar {

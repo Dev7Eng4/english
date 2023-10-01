@@ -7,6 +7,7 @@ import rightArrowIcon from '@/app/assets/right-arrow.svg';
 import { Dialog, Transition } from '@headlessui/react';
 import ProgressPercent from './ProgressCycle/ProgressCycle';
 import ProgressCycle from './ProgressCycle/ProgressCycle';
+import SpinnerSvgIcon from '@/app/components/icons/SpinnerSvgIcon';
 
 const workCounts = [
   {
@@ -72,7 +73,12 @@ const vocabularies = [
   },
 ];
 
-const PerformanceScore = () => {
+interface Props {
+  isLoading: boolean;
+  score: number;
+}
+
+const PerformanceScore = ({ isLoading, score }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleOpen = () => {
@@ -86,15 +92,26 @@ const PerformanceScore = () => {
   return (
     <>
       <div
-        className='group flex items-center justify-between px-4 py-2 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-100'
+        className='group flex items-center justify-between pl-4 pr-2 py-2 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-100'
         onClick={handleOpen}
       >
-        <div className='flex flex-col'>
-          <strong className='mr-1 text-lg'>74</strong>
-          <span className='font-medium mb-0.5'>Overall score</span>
-          <span className='text-sm'>See performance</span>
+        <div className='flex items-center'>
+          {isLoading ? (
+            <SpinnerSvgIcon />
+          ) : (
+            <>
+              {score > 0 && <strong className='mr-1 text-lg'>{score}</strong>}
+
+              <span className='font-medium'>Overall score</span>
+              {/* <span className='text-sm'>See performance</span> */}
+            </>
+          )}
         </div>
-        <Image src={rightArrowIcon} alt='Right Arrow' className='w-6 h-6 group-hover:text-blue-300' />
+        <Image
+          src={rightArrowIcon}
+          alt='Right Arrow'
+          className='w-6 h-6 group-hover:text-blue-300'
+        />
       </div>
 
       <Transition
@@ -102,7 +119,7 @@ const PerformanceScore = () => {
         show={isOpen}
         as={Fragment}
       >
-        <Dialog as='div' className='relative z-10' open={isOpen} onClose={handleClose}>
+        <Dialog as='div' className='relative z-50' open={isOpen} onClose={handleClose}>
           <Transition.Child
             as={Fragment}
             enter='ease-out duration-300'
@@ -135,11 +152,12 @@ const PerformanceScore = () => {
                     <hr />
                   </div>
 
-                  <div className='max-h-[550px] overflow-auto scrollbar'>
+                  <div className='max-h-[calc(80vh-140px)] overflow-auto scrollbar'>
                     <div className='flex gap-20 m-6 mt-3'>
                       <span>
-                        Text score: 80 out of 100. This score represents the quality of writing in this document. You can increase it by
-                        addressing Grammarly&apos;s suggestions.
+                        Text score: 80 out of 100. This score represents the quality of writing in
+                        this document. You can increase it by addressing Grammarly&apos;s
+                        suggestions.
                       </span>
 
                       <ProgressCycle />
@@ -166,14 +184,19 @@ const PerformanceScore = () => {
                     <div className='m-6 mt-8'>
                       <h3 className='flex justify-between items-center mb-2 text-xl font-bold text-gray-900'>
                         Readability
-                        <span className='font-light text-sm text-gray-500'>Metrics compared to other Grammarly users</span>
+                        <span className='font-light text-sm text-gray-500'>
+                          Metrics compared to other Grammarly users
+                        </span>
                       </h3>
 
                       <hr className='mb-4' />
 
                       <div className='mb-2'>
                         {readabilities.map(readability => (
-                          <div key={readability.key} className='flex justify-between items-center gap-2 mb-2'>
+                          <div
+                            key={readability.key}
+                            className='flex justify-between items-center gap-2 mb-2'
+                          >
                             <div className='w-5/12 flex justify-between'>
                               <span>{readability.label}</span>
                               <span className='text-blue-600 font-medium'>{readability.value}</span>
@@ -194,22 +217,28 @@ const PerformanceScore = () => {
                       </div>
 
                       <span className='text-sm'>
-                        Your text is likely to be understood by a reader who has at least a 9th-grade education (age 15). Aim for the score
-                        of at least 60-70 to ensure your text is easily readable by 80% of English speakers.
+                        Your text is likely to be understood by a reader who has at least a
+                        9th-grade education (age 15). Aim for the score of at least 60-70 to ensure
+                        your text is easily readable by 80% of English speakers.
                       </span>
                     </div>
 
                     <div className='m-6 mt-8'>
                       <h3 className='flex justify-between items-center mb-2 text-xl font-bold text-gray-900'>
                         Vocabulary
-                        <span className='font-light text-sm text-gray-500'>Metrics compared to other Grammarly users</span>
+                        <span className='font-light text-sm text-gray-500'>
+                          Metrics compared to other Grammarly users
+                        </span>
                       </h3>
 
                       <hr className='mb-4' />
 
                       <div className=''>
                         {vocabularies.map(vocab => (
-                          <div key={vocab.key} className='flex justify-between items-center gap-2 mb-2'>
+                          <div
+                            key={vocab.key}
+                            className='flex justify-between items-center gap-2 mb-2'
+                          >
                             <div className='w-2/5 flex justify-between'>
                               <span>{vocab.label}</span>
                               <span className='text-blue-600 font-medium'>{vocab.value}</span>
@@ -237,7 +266,10 @@ const PerformanceScore = () => {
                       <button className='mr-1.5 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-200 rounded-md transition-colors outline-none'>
                         Download PDF report
                       </button>
-                      <button className='px-3 py-1.5 rounded-md text-sm bg-blue-600 text-white' onClick={handleClose}>
+                      <button
+                        className='px-3 py-1.5 rounded-md text-sm bg-blue-600 text-white'
+                        onClick={handleClose}
+                      >
                         Close
                       </button>
                     </div>
