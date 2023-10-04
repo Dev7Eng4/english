@@ -7,6 +7,7 @@ import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useSta
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable';
 import { renderToString } from 'react-dom/server';
 
+import logo from '@/app/assets/logo.png';
 import loadingIcon from '@/app/assets/loading.svg';
 import notificationIcon from '@/app/assets/notification.png';
 import correctIcon from '@/app/assets/correct.png';
@@ -85,13 +86,7 @@ const Grammar = () => {
         : data
     );
 
-    const nContent = renderToString(
-      <ParagraphText
-        activeError={activeError}
-        data={fixedData}
-        onShowErrorDetail={handleActiveError}
-      />
-    );
+    const nContent = renderToString(<ParagraphText activeError={activeError} data={fixedData} onShowErrorDetail={handleActiveError} />);
 
     setContent(nContent.replaceAll('<br/>', '<br>'));
     setCheckedData(fixedData);
@@ -151,9 +146,7 @@ const Grammar = () => {
 
       const res = await fetchCheckData(value, controller.signal);
 
-      const nContent = renderToString(
-        <ParagraphText activeError={activeError} data={res} onShowErrorDetail={handleActiveError} />
-      );
+      const nContent = renderToString(<ParagraphText activeError={activeError} data={res} onShowErrorDetail={handleActiveError} />);
 
       setScore(res.length < 12 ? 100 - res.length * 5 : 35);
       setContent(nContent.replaceAll('<br/>', '<br>'));
@@ -193,8 +186,8 @@ const Grammar = () => {
 
     previousRef.current = handleConvertText(textValue);
 
-    if (evt.target.value === content) return;
     console.log('chang 3', evt.target.value);
+    if (evt.target.value === content) return;
     console.log('change 4', content);
     controllerRef.current.abort();
 
@@ -261,13 +254,16 @@ const Grammar = () => {
           maxWidth: `calc(100% - ${showAssistant ? '224px' : '0px'})`,
         }}
       >
-        <header className='sticky top-0 h-16 p-4 px-8 flex justify-between items-center bg-yellow-300 z-30'>
-          <h2 className='text-xl font-semibold'>Grammar check</h2>
+        <header className='sticky top-0 h-16 p-4 px-8 flex justify-between items-center z-30'>
+          <div className='flex items-center'>
+            <Image src={logo} alt='Grammar check' className='w-14' />
+            <h2 className='text-xl font-semibold'>Grammar</h2>
+          </div>
 
           {showAssistant ? (
             <h2 className='w-2/5 flex items-center justify-center text-lg font-semibold'>
               {totalSuggestions > 0 && (
-                <span className='inline-flex justify-center items-center mr-2 w-6 h-6 p-2 text-white text-xs bg-[#eb4034] rounded-full'>
+                <span className='inline-flex justify-center items-center mr-2 px-2 py-1 text-white text-xs bg-[#eb4034] rounded-full'>
                   {totalSuggestions}
                 </span>
               )}
@@ -275,6 +271,15 @@ const Grammar = () => {
             </h2>
           ) : (
             <div className={`${showAssistant ? 'hidden' : 'flex'}`}>
+              <span
+                className='inline-flex items-center mr-4 text-xs uppercase font-medium text-gray-600 cursor-pointer'
+                onClick={handleToggleAssistant}
+              >
+                {totalSuggestions > 0 && (
+                  <span className='inline-flex px-2 mr-1 text-white text-sm upp rounded-lg bg-[#eb4034]'>{totalSuggestions}</span>
+                )}
+                Suggestions
+              </span>
               <button
                 className={`group relative flex items-center justify-center w-52 bg-blue-600 text-white py-1.5 text-xs uppercase font-semibold tracking-wide rounded-3xl hover:bg-blue-500 transition-all`}
                 onClick={handleToggleAssistant}
@@ -308,17 +313,13 @@ const Grammar = () => {
           />
 
           {showPlaceholder && (
-            <div
-              className={`absolute top-3 text-gray-400 ${
-                showAssistant ? 'left-8' : 'left-0 pl-[calc(12.5%+16px)]'
-              }`}
-            >
+            <div className={`absolute top-3 text-gray-400 ${showAssistant ? 'left-8' : 'left-0 pl-[calc(12.5%+16px)]'}`}>
               Type or paste (Ctrl + V) your text.
             </div>
           )}
 
           <div
-            className={`sticky top-[114px] bg-orange-400 max-h-[calc(100vh-114px)] overflow-auto scrollbar-invisible p-4 pb-6 pr-8 flex flex-col ${
+            className={`sticky top-[114px] max-h-[calc(100vh-114px)] overflow-auto scrollbar-invisible p-4 pb-6 pr-8 flex flex-col ${
               showAssistant ? 'lg:w-2/5' : 'lg:w-0 hidden'
             }`}
           >
@@ -331,12 +332,8 @@ const Grammar = () => {
             {!content && (
               <div className='flex flex-col items-center self-center my-auto pb-40'>
                 <NothingSvgIcon />
-                <h3 className='text-lg font-semibold mt-4 mb-2 text-center'>
-                  Nothing to check yet!
-                </h3>
-                <p className='text-gray-500 w-4/5 text-center'>
-                  Start writing or upload a document to see Grammar feedback.
-                </p>
+                <h3 className='text-lg font-semibold mt-4 mb-2 text-center'>Nothing to check yet!</h3>
+                <p className='text-gray-500 w-4/5 text-center'>Start writing or upload a document to see Grammar feedback.</p>
               </div>
             )}
 

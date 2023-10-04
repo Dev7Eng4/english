@@ -7,22 +7,23 @@ const suggestionTypes = [
   {
     key: 'correct',
     label: 'Correctness',
+    percentCorrect: 75,
     color: '#eb4034',
   },
   {
     key: 'clarity',
     label: 'Clarity',
-    color: '#8a3731',
+    color: '#4a6ee0',
   },
   {
     key: 'engagement',
     label: 'Engagement',
-    color: '#34eb77',
+    color: '#15c39a',
   },
   {
     key: 'delivery',
     label: 'Delivery',
-    color: '#eb34a5',
+    color: '#8f4cbf',
   },
 ];
 
@@ -58,7 +59,7 @@ const SuggestionType = () => {
           </span>
           <div className='mt-2 w-full bg-gray-200 rounded-full h-1 dark:bg-gray-700'>
             <div
-              className={`h-1 rounded-full w-3/4 bg-[${sgType.color}]`}
+              className={`h-1 rounded-full bg-[${sgType.color}] w-[${sgType.percentCorrect ?? '100'}%]`}
               style={{
                 backgroundColor: sgType.color,
               }}
