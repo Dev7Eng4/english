@@ -11,20 +11,8 @@ const LineError = ({ error, activeError, onShowErrorDetail }: Props) => {
     onShowErrorDetail(error.id);
   };
 
-  const handleInput = (e: FormEvent<HTMLSpanElement>) => {
-    e.stopPropagation();
-    e.preventDefault();
-    console.log('aa');
-  };
-
   return (
-    <span
-      contentEditable
-      onInput={handleInput}
-      className='error-line'
-      onClick={handleShowDetail}
-      data-mark-id={error.id}
-    >
+    <span className={`error-line ${activeError === error.id ? 'bg-red-200' : ''}`} onClick={handleShowDetail} data-mark-id={error.id}>
       {error.text}
     </span>
   );
