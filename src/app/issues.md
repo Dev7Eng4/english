@@ -1,0 +1,4 @@
+- cursor always go to at the end of paragraph
+- reload after get data from api
+- have red border bottom from external ???
+-
