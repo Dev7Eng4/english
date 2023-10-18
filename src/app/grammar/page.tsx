@@ -26,6 +26,7 @@ import SuggestionType from './components/SuggestionType';
 import SpinnerSvgIcon from '../components/icons/SpinnerSvgIcon';
 
 const PLACEHOLDER = '';
+let savedCursorSelection: number;
 
 const Grammar = () => {
   const [content, setContent] = useState('');
@@ -40,6 +41,7 @@ const Grammar = () => {
   const editorRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef(new AbortController());
   const cursorRef = useRef(null);
+  const selectionRef = useRef();
 
   const isExistsError = useMemo(() => {
     return checkedData.length > 0 && checkedData.findIndex(data => data.status === 'false') === -1;
@@ -48,6 +50,53 @@ const Grammar = () => {
   const totalSuggestions = useMemo(() => {
     return checkedData.filter(data => data.status === 'false').length;
   }, [checkedData]);
+
+  const handleSaveCursor = () => {
+    const editor = document.getElementById('editor');
+    const selection = window.getSelection();
+
+    if (!editor || !selection) return;
+
+    const range = selection.getRangeAt(0);
+    const preSelectionRange = range.cloneRange();
+    preSelectionRange.selectNodeContents(editor);
+    preSelectionRange.setEnd(range.startContainer, range.startOffset);
+    savedCursorSelection = preSelectionRange.toString().length;
+  };
+
+  const handleRestoreCursor = () => {
+    const editor = document.getElementById('editor');
+    const textNode = getTextNodeAtPosition(editor, savedCursorSelection);
+
+    if (textNode) {
+      const range = document.createRange();
+      range.setStart(textNode, savedCursorSelection);
+      range.collapse(true);
+      const select = window.getSelection();
+      select?.removeAllRanges();
+      select?.addRange(range);
+      editor?.focus();
+    }
+  };
+
+  const getTextNodeAtPosition = (root: any, index: number) => {
+    const tree = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    let currentIndex = 0;
+
+    while (tree.nextNode()) {
+      const currentNode = tree.currentNode;
+      // @ts-ignore
+      const nodeLength = currentNode.length;
+
+      if (currentIndex + nodeLength >= index) {
+        return currentNode;
+      }
+
+      currentIndex += nodeLength;
+    }
+
+    return null;
+  };
 
   const handleAdd = useCallback(() => {
     const errorLines = document.querySelectorAll('.error-line');
@@ -140,6 +189,8 @@ const Grammar = () => {
         controllerRef.current.abort();
       }
 
+      console.log('ref', savedCursorSelection);
+
       const controller = new AbortController();
 
       controllerRef.current = controller;
@@ -209,9 +260,12 @@ const Grammar = () => {
     // debounceCheck(textValue);
   };
 
+  const handleFocusEditor = () => {
+    handleSaveCursor();
+  };
+
   const handleKeyDown = () => {
-    // setContent(editorRef.current?.innerHTML || '');
-    // console.log('down', editorRef.current?.innerText);
+    handleSaveCursor();
   };
 
   const handleToggleShowLineError = (e: ChangeEvent<HTMLInputElement>) => {
@@ -304,6 +358,7 @@ const Grammar = () => {
             html={content}
             disabled={false}
             onChange={handleChangeEditor}
+            onClick={handleFocusEditor}
             onKeyDown={handleKeyDown}
             onInput={handleInputEditor}
             autoFocus={true}
