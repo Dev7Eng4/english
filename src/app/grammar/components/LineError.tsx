@@ -12,9 +12,13 @@ const LineError = ({ error, activeError, onShowErrorDetail }: Props) => {
   };
 
   return (
-    <span className={`error-line ${activeError === error.id ? 'bg-red-200' : ''}`} onClick={handleShowDetail} data-mark-id={error.id}>
+    <p
+      className={`inline-block error-line ${activeError === error.id ? 'bg-red-200' : ''}`}
+      onClick={handleShowDetail}
+      data-mark-id={error.id}
+    >
       {error.text}
-    </span>
+    </p>
   );
 };
 

@@ -3,6 +3,8 @@
 import React, { ChangeEvent, FormEvent, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import rangy from 'rangy';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 let savedCursorRange: Range;
 let savedCursorSelection: number;
@@ -104,21 +106,23 @@ const Home = () => {
 
   return (
     <div>
-      <div
+      {/* <div
         id='editor'
         contentEditable
         className='w-full h-60 p-4 rounded-md border border-gray-300'
         onInput={handleInputEditor}
         onChange={handleChangeEditor}
         onKeyDown={handleKeydown}
-      ></div>
+      ></div> */}
 
-      <button className='p-4 bg-blue-600 rounded-lg' onClick={handleChange}>
+      <ReactQuill theme='snow' />
+
+      {/* <button className='p-4 bg-blue-600 rounded-lg' onClick={handleChange}>
         Change
       </button>
       <button className='p-4 bg-blue-600 rounded-lg' onClick={handleTest}>
         Test
-      </button>
+      </button> */}
     </div>
   );
 };

@@ -16,7 +16,7 @@ const ParagraphText = ({ data, activeError, onShowErrorDetail }: Props) => {
           line.text === '\n' ? (
             <br />
           ) : (
-            line.text
+            <p className='inline'>{line.text}</p>
           )
         ) : (
           <LineError key={line.id} activeError={activeError} error={line} onShowErrorDetail={onShowErrorDetail} />

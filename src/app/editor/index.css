@@ -1,3 +1,15 @@
-.ck-editor__editable ~ grammarly-extension {
+.ql-editor ~ grammarly-extension {
   display: none;
+}
+
+/* .ql-editor p {
+  display: inline-block;
+} */
+
+p.inline > br {
+  display: none;
+}
+
+.ql-editor {
+  font-size: 14px;
 }
