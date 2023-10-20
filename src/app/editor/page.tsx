@@ -3,10 +3,11 @@
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import { debounce } from 'lodash';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import parse from 'html-react-parser';
 import { fetchCheckData } from '../services/api';
 import ParagraphText from '../grammar/components/ParagraphText';
 
@@ -29,7 +30,6 @@ const GrammarPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [content, setContent] = useState('');
   const [errors, setErrors] = useState<ResponseText[]>([]);
-  const [showPlaceholder, setShowPlaceholder] = useState(true);
   const [activeError, setActiveError] = useState(-1);
   const [showAssistant, setShowAssistant] = useState(true);
   const [score, setScore] = useState(0);
@@ -38,6 +38,7 @@ const GrammarPage = () => {
   const previousRef = useRef('');
   const controllerRef = useRef(new AbortController());
 
+  console.log('err', errors);
   const isExistsError = useMemo(() => {
     return errors.length > 0 && errors.findIndex(data => data.status === 'false') === -1;
   }, [errors]);
@@ -66,9 +67,7 @@ const GrammarPage = () => {
     );
 
     handleUpdateContent(fixedData);
-    // const nContent = renderToString(<ParagraphText activeError={activeError} data={fixedData} onShowErrorDetail={handleActiveError} />);
 
-    // setContent(nContent.replaceAll('<br/>', '<br>'));
     setErrors(fixedData);
     setActiveError(-1);
   };
@@ -110,13 +109,11 @@ const GrammarPage = () => {
     try {
       // const editor = document.querySelector('.ck-editor__editable');
 
-      console.log('value api', value.includes('\n'));
       if (!value) return;
 
       setIsLoading(true);
 
       if (controllerRef.current.signal) {
-        console.log('in');
         controllerRef.current.abort();
       }
 
@@ -136,7 +133,15 @@ const GrammarPage = () => {
     }
   };
 
-  const handleChangeEditor = (value: string, delta: any, source: any, editor: ReactQuill.UnprivilegedEditor) => {
+  const handleRemoveTextError = (value: string) => {
+    const newContent = value.replaceAll('error-line', '');
+
+    if (newContent !== value) {
+      handleUpdateContent(newContent);
+    }
+  };
+
+  const handleChangeEditor = (value: string, delta: unknown, source: unknown, editor: ReactQuill.UnprivilegedEditor) => {
     console.log('value', value);
 
     // console.log('content', editor.getContents());
@@ -150,6 +155,7 @@ const GrammarPage = () => {
 
     if (!isChangeRef.current) {
       isChangeRef.current = true;
+      console.log('return');
       return;
     }
 
@@ -157,20 +163,28 @@ const GrammarPage = () => {
 
     if (!valCheck) return;
 
-    console.log(valEditor);
+    handleRemoveTextError(value);
+
+    // console.log(valEditor);
     setErrors([]);
     setContent(value);
     debounceCheck(handleConvertText(valCheck));
   };
 
-  const handleUpdateContent = (content: ResponseText[]) => {
+  const handleUpdateContent = (content: ResponseText[] | string) => {
     const root = document.getElementsByClassName('ql-editor');
 
     if (!root[0]) return;
 
-    console.log('root', <ParagraphText activeError={-1} data={content} onShowErrorDetail={() => {}} />);
-
     isChangeRef.current = false;
+
+    const rootEle = createRoot(root[0]);
+
+    if (typeof content === 'string') {
+      rootEle.render(parse(content));
+
+      return;
+    }
 
     createRoot(root[0]).render(<ParagraphText activeError={activeError} data={content} onShowErrorDetail={handleActiveError} />);
   };
@@ -180,6 +194,24 @@ const GrammarPage = () => {
   useEffect(() => {
     handleUpdateContent(errors);
   }, [activeError]);
+
+  // useEffect(() => {
+  //   const test =
+  //     '<p class="inline"><br></p><p class="inline">This</p><p class="inline"> a</p><p class="inline">is</p><p class="inline"> </p><p class="inline-block  " data-mark-id="7fcd2a32-6e8f-4b84-802c-cbbad65395bd">err</p>';
+
+  //   const root = document.getElementsByClassName('ql-editor');
+
+  //   const rootEle = createRoot(root[0]);
+  //   console.log('rrrr', rootEle );
+
+  //   rootEle.render(
+  //     <p
+  //       dangerouslySetInnerHTML={{
+  //         __html: test,
+  //       }}
+  //     ></p>
+  //   );
+  // }, []);
 
   return (
     <div className='h-screen flex'>
@@ -271,12 +303,6 @@ const GrammarPage = () => {
             bounds={'.app'}
             onChange={handleChangeEditor}
           />
-
-          {/* {showPlaceholder && (
-            <div className={`absolute top-3 text-gray-400 ${showAssistant ? 'left-8' : 'left-0 pl-[calc(12.5%+16px)]'}`}>
-              Type or paste (Ctrl + V) your text.
-            </div>
-          )} */}
 
           <div
             className={`sticky top-[114px] max-h-[calc(100vh-114px)] overflow-auto scrollbar-invisible p-4 pb-6 pr-8 flex flex-col ${
