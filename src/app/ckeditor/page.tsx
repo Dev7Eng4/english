@@ -16,7 +16,7 @@ import logo from '@/app/assets/logo.png';
 import moveRightIcon from '@/app/assets/move-right.svg';
 import loadingIcon from '@/app/assets/loading.svg';
 
-import './index.scss';
+// import './index.css';
 import Image from 'next/image';
 import NothingSvgIcon from '../components/icons/NothingSvgIcon';
 import Suggestion from '../grammar/components/Suggestion';
@@ -34,13 +34,13 @@ const GrammarPage = () => {
   const [activeError, setActiveError] = useState(-1);
   const [showAssistant, setShowAssistant] = useState(true);
   const [score, setScore] = useState(0);
-  const [marginTop, setMarginTop] = useState(68);
 
   const isChangeRef = useRef(true);
   const previousRef = useRef('');
+  const editorRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef(new AbortController());
 
-  // console.log('err', errors);
+  console.log('err', errors);
   const isExistsError = useMemo(() => {
     return errors.length > 0 && errors.findIndex(data => data.status === 'false') === -1;
   }, [errors]);
@@ -54,42 +54,21 @@ const GrammarPage = () => {
   };
 
   const handleFixError = (error: ResponseText) => {
-    const idxFixError = errors.findIndex(data => data.id === error.id);
-    const isInsert = error.kind_of_error.includes('Insert');
-    const fixedText = `${error.revised_sentence}${isInsert ? '' : ''}`;
+    const fixedError = errors.find(data => data.id === error.id);
 
-    if (idxFixError === -1) return;
+    if (!fixedError) return;
 
-    let posFix = 3;
-
-    console.log('idx', content.includes('</p>'));
-
-    const fixedData = errors.map((data, idx) => {
-      if (idxFixError > idx) {
-        posFix = posFix + (data.text === '\n' ? 7 : data.text.length);
-        console.log('idddd', idx);
-        console.log('data', data);
-        console.log('id', posFix);
-      }
-
-      return data.id === error.id
+    const fixedData = errors.map(data =>
+      data.id === error.id
         ? {
             ...error,
             status: 'true',
-            text: fixedText,
+            text: error.revised_sentence,
           }
-        : data;
-    });
+        : data
+    );
 
-    console.log('ee', errors);
-    console.log('pos', posFix);
-
-    const newContent =
-      content.slice(0, posFix) + content.slice(posFix).replace(error.text, fixedText);
-
-    console.log('cconte', newContent);
-    setContent(newContent);
-    // handleUpdateContent(fixedData);
+    handleUpdateContent(fixedData);
 
     setErrors(fixedData);
     setActiveError(-1);
@@ -132,6 +111,8 @@ const GrammarPage = () => {
     try {
       // const editor = document.querySelector('.ck-editor__editable');
 
+      if (!value) return;
+
       setIsLoading(true);
 
       if (controllerRef.current.signal) {
@@ -145,7 +126,7 @@ const GrammarPage = () => {
       const res = await fetchCheckData(value, controller.signal);
 
       // setContent(renderToString(<ParagraphText activeError={-1} data={res} onShowErrorDetail={() => {}} />));
-      // handleUpdateContent(res);
+      handleUpdateContent(res);
 
       setErrors(res);
       setIsLoading(false);
@@ -163,9 +144,9 @@ const GrammarPage = () => {
   };
 
   const handleBreakLine = (currentValue: string, selection: any) => {
-    // console.log('curre', currentValue);
-    // console.log('pre', previousRef.current);
-    // console.log('diff', diff(currentValue, previousRef.current));
+    console.log('curre', currentValue);
+    console.log('pre', previousRef.current);
+    console.log('diff', diff(currentValue, previousRef.current));
   };
 
   const handleKeydown = (evt: React.KeyboardEvent) => {
@@ -187,41 +168,40 @@ const GrammarPage = () => {
     // console.log('content', editor.());
     // console.log('content', editor.getContents());
     const valEditor = editor.getText();
-
-    console.log('change', valEditor.includes('<p>'));
-
     // setContent(value.replaceAll(/<\/?p[^>]*>/g, '').replace('<br>', ''));
 
     handleBreakLine(value, editor.getSelection());
 
-    // if (!isChangeRef.current) {
-    //   isChangeRef.current = true;
-    //   console.log('return');
-    //   return;
-    // }
+    if (!isChangeRef.current) {
+      isChangeRef.current = true;
+      console.log('return');
+      return;
+    }
 
     const valCheck = valEditor.slice(0, valEditor.length - 1);
 
-    if (!valEditor) return;
+    if (!valCheck) return;
 
-    // handleRemoveTextError(value);
+    handleRemoveTextError(value);
 
     previousRef.current = value;
     // console.log(valEditor);
     setErrors([]);
     setContent(value);
 
-    debounceCheck(valCheck);
+    debounceCheck(handleConvertText(valCheck));
   };
 
   const handleUpdateContent = (content: ResponseText[] | string) => {
-    const root = document.getElementsByClassName('ql-editor');
+    const root = document.getElementsByClassName('ck-editor__editable');
 
     if (!root[0]) return;
 
     isChangeRef.current = false;
 
     const rootEle = createRoot(root[0]);
+
+    console.log('root', rootEle);
 
     if (typeof content === 'string') {
       rootEle.render(parse(content));
@@ -237,28 +217,51 @@ const GrammarPage = () => {
       />
     );
 
+    console.log('render');
+
     createRoot(root[0]).render(
-      <ParagraphText
-        activeError={activeError}
-        data={content}
-        onShowErrorDetail={handleActiveError}
-      />
+      <p>hoho</p>
+      // <ParagraphText
+      //   activeError={activeError}
+      //   data={content}
+      //   onShowErrorDetail={handleActiveError}
+      // />
     );
   };
 
   const debounceCheck = useCallback(debounce(handleCheckContent, 1000), []);
 
+  const handleEditorChange = (editor: ClassicEditor) => {
+    const editorData = editor.getData();
+    console.log('data', editorData);
+    const div = document.createElement('div');
+    div.innerHTML = editorData;
+    const plainText = div.innerText.replace(/\n/g, '\\n');
+    console.log('plain', plainText);
+    setContent(plainText);
+
+    setErrors([]);
+
+    debounceCheck(handleConvertText(plainText));
+  };
+
   useEffect(() => {
-    const editorHeader = document.querySelector('.ql-toolbar');
-
-    if (!editorHeader) return;
-
-    setMarginTop(editorHeader.getBoundingClientRect().height);
-  }, []);
-
-  useEffect(() => {
-    // handleUpdateContent(errors);
+    handleUpdateContent(errors);
   }, [activeError]);
+
+  useEffect(() => {
+    if (!editorRef.current) return;
+
+    ClassicEditor.create(editorRef.current)
+      .then(editor => {
+        editor.model.document.on('change:data', () => {
+          handleEditorChange(editor);
+        });
+      })
+      .catch(error => {
+        console.error(error.stack);
+      });
+  }, []);
 
   // useEffect(() => {
   //   const test =
@@ -286,7 +289,7 @@ const GrammarPage = () => {
           maxWidth: `calc(100% - ${showAssistant ? '224px' : '0px'})`,
         }}
       >
-        <header className='sticky top-0 h-16 p-4 px-8 flex justify-between items-center bg-white z-50'>
+        <header className='sticky top-0 h-16 p-4 px-8 flex justify-between items-center z-30'>
           <div className='flex items-center'>
             <Image src={logo} alt='Grammar check' className='w-14' />
             <h2 className='text-xl font-semibold'>Grammar</h2>
@@ -329,70 +332,8 @@ const GrammarPage = () => {
           )}
         </header>
 
-        <div className='min-h-[calc(100vh-64px)] relative pt-8 flex flex-col lg:flex-row lg:justify-between gap-8'>
-          <div
-            id='editor'
-            className={`relative mx-4 mb-5 z-10 outline-none rounded-lg ${
-              showAssistant ? 'lg:w-1/2' : 'lg:w-3/4 mx-auto'
-            }`}
-          >
-            <ReactQuill
-              theme='snow'
-              className='h-full'
-              modules={{
-                toolbar: [
-                  [{ header: '1' }, { header: '2' }, { font: [] }],
-                  // [{ size: [] }],
-                  ['bold', 'italic', 'underline'],
-                  [{ list: 'ordered' }, { list: 'bullet' }],
-                  ['link', 'image'],
-                  // ['clean'],
-                ],
-                clipboard: {
-                  // toggle to add extra line breaks when pasting HTML:
-                  matchVisual: false,
-                },
-              }}
-              formats={[
-                'span',
-                'header',
-                'font',
-                'size',
-                'bold',
-                'italic',
-                'underline',
-                'strike',
-                'blockquote',
-                'list',
-                'bullet',
-                'indent',
-                'link',
-                'image',
-                'video',
-              ]}
-              placeholder='Type or paste (Ctrl + V) your text.'
-              bounds={'.app'}
-              value={content}
-              onChange={handleChangeEditor}
-              // onKeyDown={handleKeydown}
-            />
-
-            {errors.length > 0 && (
-              <p
-                id='paragraph-error'
-                className='absolute py-3 px-[15px] inset-0 bg-transparent text-sm'
-                style={{
-                  marginTop: `${marginTop}px`,
-                }}
-              >
-                <ParagraphText
-                  activeError={activeError}
-                  data={errors}
-                  onShowErrorDetail={handleActiveError}
-                />
-              </p>
-            )}
-          </div>
+        <div className='relative mt-8 flex flex-col lg:flex-row lg:justify-between gap-8'>
+          <div ref={editorRef} id='editor'></div>
 
           <div
             className={`sticky top-[114px] max-h-[calc(100vh-114px)] overflow-auto scrollbar-invisible p-4 pb-6 pr-8 flex flex-col ${

@@ -13,7 +13,9 @@ const LineError = ({ error, activeError, onShowErrorDetail }: Props) => {
 
   return (
     <p
-      className={`inline-block error-line ${activeError === error.id ? 'bg-red-200' : ''}`}
+      className={`inline relative border-b-2 border-red-500 text-transparent ${
+        activeError === error.id ? 'bg-red-200 z-20' : 'bg-transparent z-50'
+      }`}
       onClick={handleShowDetail}
       data-mark-id={error.id}
     >

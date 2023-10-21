@@ -3,10 +3,10 @@
 @tailwind utilities;
 
 @layer components {
-  .error-line {
-    border-bottom: 2px solid rgb(200, 24, 24);
-    caret-color: black;
-  }
+  // .error-line {
+  //   border-bottom: 2px solid rgb(200, 24, 24);
+  //   caret-color: black;
+  // }
 
   .scrollbar-invisible {
     &::-webkit-scrollbar {
@@ -53,4 +53,5 @@
 }
 
 body {
+  font-family: Arial, sans-serif !important;
 }

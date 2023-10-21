@@ -6,10 +6,17 @@
   display: inline-block;
 } */
 
-p.inline > br {
+/* p.inline > br {
   display: none;
+} */
+
+.ql-container {
+  height: calc(100% - 42px);
 }
 
 .ql-editor {
   font-size: 14px;
+  position: relative;
+  z-index: 40;
+  font-family: Arial, sans-serif;
 }
