@@ -2,11 +2,7 @@
 
 import React, { ChangeEvent, FormEvent, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import rangy from 'rangy';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
 
-let savedCursorRange: Range;
 let savedCursorSelection: number;
 
 const Home = () => {
@@ -114,8 +110,6 @@ const Home = () => {
         onChange={handleChangeEditor}
         onKeyDown={handleKeydown}
       ></div> */}
-
-      <ReactQuill theme='snow' />
 
       {/* <button className='p-4 bg-blue-600 rounded-lg' onClick={handleChange}>
         Change

@@ -5,10 +5,10 @@ import { CKEditor } from '@ckeditor/ckeditor5-react';
 import { debounce } from 'lodash';
 import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import ReactQuill from 'react-quill';
+import dynamic from 'next/dynamic';
+// import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import parse from 'html-react-parser';
-import diff from 'fast-diff';
 import { fetchCheckData } from '../services/api';
 import ParagraphText from '../grammar/components/ParagraphText';
 
@@ -26,15 +26,19 @@ import PerformanceScore from '../grammar/components/PerformanceScore';
 import GoalSetting from '../grammar/components/GoalSetting';
 import SuggestionType from '../grammar/components/SuggestionType';
 import SpinnerSvgIcon from '../components/icons/SpinnerSvgIcon';
+import ReactQuillType from 'react-quill';
+
+// const ReactQuill = dynamic(import('react-quill'), { ssr: false });
 
 const GrammarPage = () => {
+  const ReactQuill = useMemo(() => dynamic(() => import('react-quill'), { ssr: false }), []);
   const [isLoading, setIsLoading] = useState(false);
   const [content, setContent] = useState('');
   const [errors, setErrors] = useState<ResponseText[]>([]);
   const [activeError, setActiveError] = useState(-1);
   const [showAssistant, setShowAssistant] = useState(true);
   const [score, setScore] = useState(0);
-  const [marginTop, setMarginTop] = useState(68);
+  const [marginTop, setMarginTop] = useState(43);
 
   const isChangeRef = useRef(true);
   const previousRef = useRef('');
@@ -84,8 +88,7 @@ const GrammarPage = () => {
     console.log('ee', errors);
     console.log('pos', posFix);
 
-    const newContent =
-      content.slice(0, posFix) + content.slice(posFix).replace(error.text, fixedText);
+    const newContent = content.slice(0, posFix) + content.slice(posFix).replace(error.text, fixedText);
 
     console.log('cconte', newContent);
     setContent(newContent);
@@ -172,12 +175,7 @@ const GrammarPage = () => {
     // console.log('evt', evt.key);
   };
 
-  const handleChangeEditor = (
-    value: string,
-    delta: unknown,
-    source: unknown,
-    editor: ReactQuill.UnprivilegedEditor
-  ) => {
+  const handleChangeEditor = (value: string, delta: unknown, source: unknown, editor: ReactQuillType.UnprivilegedEditor) => {
     // console.log('value', value);
 
     // console.log('content', editor.getContents());
@@ -229,21 +227,9 @@ const GrammarPage = () => {
       return;
     }
 
-    previousRef.current = renderToString(
-      <ParagraphText
-        activeError={activeError}
-        data={content}
-        onShowErrorDetail={handleActiveError}
-      />
-    );
+    previousRef.current = renderToString(<ParagraphText activeError={activeError} data={content} onShowErrorDetail={handleActiveError} />);
 
-    createRoot(root[0]).render(
-      <ParagraphText
-        activeError={activeError}
-        data={content}
-        onShowErrorDetail={handleActiveError}
-      />
-    );
+    createRoot(root[0]).render(<ParagraphText activeError={activeError} data={content} onShowErrorDetail={handleActiveError} />);
   };
 
   const debounceCheck = useCallback(debounce(handleCheckContent, 1000), []);
@@ -308,9 +294,7 @@ const GrammarPage = () => {
                 // onClick={handleToggleAssistant}
               >
                 {totalSuggestions > 0 && (
-                  <span className='inline-flex px-2 mr-1 text-white text-sm upp rounded-lg bg-[#eb4034]'>
-                    {totalSuggestions}
-                  </span>
+                  <span className='inline-flex px-2 mr-1 text-white text-sm upp rounded-lg bg-[#eb4034]'>{totalSuggestions}</span>
                 )}
                 Suggestions
               </span>
@@ -330,12 +314,7 @@ const GrammarPage = () => {
         </header>
 
         <div className='min-h-[calc(100vh-64px)] relative pt-8 flex flex-col lg:flex-row lg:justify-between gap-8'>
-          <div
-            id='editor'
-            className={`relative mx-4 mb-5 z-10 outline-none rounded-lg ${
-              showAssistant ? 'lg:w-1/2' : 'lg:w-3/4 mx-auto'
-            }`}
-          >
+          <div id='editor' className={`relative mx-4 mb-5 z-10 outline-none rounded-lg ${showAssistant ? 'lg:w-1/2' : 'lg:w-3/4 mx-auto'}`}>
             <ReactQuill
               theme='snow'
               className='h-full'
@@ -371,7 +350,7 @@ const GrammarPage = () => {
                 'video',
               ]}
               placeholder='Type or paste (Ctrl + V) your text.'
-              bounds={'.app'}
+              // bounds={'.app'}
               value={content}
               onChange={handleChangeEditor}
               // onKeyDown={handleKeydown}
@@ -385,11 +364,7 @@ const GrammarPage = () => {
                   marginTop: `${marginTop}px`,
                 }}
               >
-                <ParagraphText
-                  activeError={activeError}
-                  data={errors}
-                  onShowErrorDetail={handleActiveError}
-                />
+                <ParagraphText activeError={activeError} data={errors} onShowErrorDetail={handleActiveError} />
               </p>
             )}
           </div>
@@ -408,12 +383,8 @@ const GrammarPage = () => {
             {!content && (
               <div className='flex flex-col items-center self-center my-auto pb-40'>
                 <NothingSvgIcon />
-                <h3 className='text-lg font-semibold mt-4 mb-2 text-center'>
-                  Nothing to check yet!
-                </h3>
-                <p className='text-gray-500 w-4/5 text-center'>
-                  Start writing or upload a document to see Grammar feedback.
-                </p>
+                <h3 className='text-lg font-semibold mt-4 mb-2 text-center'>Nothing to check yet!</h3>
+                <p className='text-gray-500 w-4/5 text-center'>Start writing or upload a document to see Grammar feedback.</p>
               </div>
             )}
 
