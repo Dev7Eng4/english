@@ -8,6 +8,7 @@ import { createRoot } from 'react-dom/client';
 import dynamic from 'next/dynamic';
 // import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import ReactQuillType from 'react-quill';
 import parse from 'html-react-parser';
 import { fetchCheckData } from '../services/api';
 import ParagraphText from '../grammar/components/ParagraphText';
@@ -16,7 +17,6 @@ import logo from '@/app/assets/logo.png';
 import moveRightIcon from '@/app/assets/move-right.svg';
 import loadingIcon from '@/app/assets/loading.svg';
 
-import './index.scss';
 import Image from 'next/image';
 import NothingSvgIcon from '../components/icons/NothingSvgIcon';
 import Suggestion from '../grammar/components/Suggestion';
@@ -26,9 +26,11 @@ import PerformanceScore from '../grammar/components/PerformanceScore';
 import GoalSetting from '../grammar/components/GoalSetting';
 import SuggestionType from '../grammar/components/SuggestionType';
 import SpinnerSvgIcon from '../components/icons/SpinnerSvgIcon';
-import ReactQuillType from 'react-quill';
 
-// const ReactQuill = dynamic(import('react-quill'), { ssr: false });
+import './index.scss';
+
+const isInsertError = (error: ResponseText) => error.kind_of_error.includes('Insert');
+const isRemoveError = (error: ResponseText) => error.kind_of_error.includes('Remove');
 
 const GrammarPage = () => {
   const ReactQuill = useMemo(() => dynamic(() => import('react-quill'), { ssr: false }), []);
@@ -38,13 +40,13 @@ const GrammarPage = () => {
   const [activeError, setActiveError] = useState(-1);
   const [showAssistant, setShowAssistant] = useState(true);
   const [score, setScore] = useState(0);
-  const [marginTop, setMarginTop] = useState(43);
+  const [marginTop, setMarginTop] = useState(0);
 
   const isChangeRef = useRef(true);
   const previousRef = useRef('');
+  const cursorPosRef = useRef(0);
   const controllerRef = useRef(new AbortController());
 
-  // console.log('err', errors);
   const isExistsError = useMemo(() => {
     return errors.length > 0 && errors.findIndex(data => data.status === 'false') === -1;
   }, [errors]);
@@ -54,46 +56,112 @@ const GrammarPage = () => {
   }, [errors]);
 
   const handleActiveError = (id: number) => {
+    console.log('id');
     setActiveError(id);
   };
 
   const handleFixError = (error: ResponseText) => {
     const idxFixError = errors.findIndex(data => data.id === error.id);
-    const isInsert = error.kind_of_error.includes('Insert');
-    const fixedText = `${error.revised_sentence}${isInsert ? '' : ''}`;
+    const fixedText = `${error.revised_sentence}${isInsertError(error) ? '' : ''}`;
 
     if (idxFixError === -1) return;
 
-    let posFix = 3;
+    let posFix = isInsertError(error) || isRemoveError(error) ? 3 : 3;
 
     console.log('idx', content.includes('</p>'));
 
-    const fixedData = errors.map((data, idx) => {
-      if (idxFixError > idx) {
-        posFix = posFix + (data.text === '\n' ? 7 : data.text.length);
-        console.log('idddd', idx);
-        console.log('data', data);
-        console.log('id', posFix);
-      }
+    const fixedData = errors.reduce(
+      (result: ResponseText[], currError: ResponseText, idx: number) => {
+        if (idxFixError > idx) {
+          const dis =
+            currError.text === '\n'
+              ? 7
+              : currError.text.length -
+                (isInsertError(currError) || isRemoveError(currError) ? 1 : 0);
+          posFix = posFix + dis;
+          console.log('idddd', idx);
+          console.log('data', currError);
+          console.log('id', posFix);
+        }
 
-      return data.id === error.id
-        ? {
-            ...error,
-            status: 'true',
-            text: fixedText,
-          }
-        : data;
-    });
+        if (isRemoveError(error) && idxFixError + 1 === idx) {
+          return [
+            ...result,
+            {
+              ...currError,
+              text: '',
+            },
+          ];
+        }
 
-    console.log('ee', errors);
-    console.log('pos', posFix);
+        return [
+          ...result,
+          currError.id === error.id
+            ? {
+                ...error,
+                status: 'true',
+                text: fixedText,
+              }
+            : currError,
+        ];
+      },
+      []
+    );
 
-    const newContent = content.slice(0, posFix) + content.slice(posFix).replace(error.text, fixedText);
+    // const fixedData = errors.map((data, idx) => {
+    //   if (idxFixError > idx) {
+    //     const dis =
+    //       data.text === '\n'
+    //         ? 7
+    //         : data.text.length - (isInsertError(data) || isRemoveError(data) ? 1 : 0);
+    //     posFix = posFix + dis;
+    //     console.log('idddd', idx);
+    //     console.log('data', data);
+    //     console.log('id', posFix);
+    //   }
+
+    //   return data.id === error.id
+    //     ? {
+    //         ...error,
+    //         status: 'true',
+    //         text: fixedText,
+    //       }
+    //     : data;
+    // });
+
+    console.log(
+      'ddd',
+      // content
+      //   .slice(posFix)
+      //   .indexOf(
+      `${isInsertError(error) ? ' ' : ''}${error.text}${isRemoveError(error) ? ' ' : ''}`
+      // )
+    );
+    console.log('ddd', isInsertError(error));
+    console.log('pos', fixedText);
+    console.log('ee', content.slice(0, posFix));
+    console.log(
+      'bbb',
+      content
+        .slice(posFix)
+        .replace(
+          `${isInsertError(error) ? ' ' : ''}${error.text}${isRemoveError(error) ? ' ' : ''}`,
+          fixedText
+        )
+    );
+
+    const newContent =
+      content.slice(0, posFix) +
+      content
+        .slice(posFix)
+        .replace(
+          `${error.text}${isRemoveError(error) ? ' ' : ''}`,
+          `${isInsertError(error) ? ' ' : ''}${fixedText}`
+        );
 
     console.log('cconte', newContent);
-    setContent(newContent);
-    // handleUpdateContent(fixedData);
 
+    setContent(newContent);
     setErrors(fixedData);
     setActiveError(-1);
   };
@@ -171,41 +239,50 @@ const GrammarPage = () => {
     // console.log('diff', diff(currentValue, previousRef.current));
   };
 
-  const handleKeydown = (evt: React.KeyboardEvent) => {
-    // console.log('evt', evt.key);
+  const handleToggleAssistant = () => {
+    setShowAssistant(prev => !prev);
   };
 
-  const handleChangeEditor = (value: string, delta: unknown, source: unknown, editor: ReactQuillType.UnprivilegedEditor) => {
-    // console.log('value', value);
+  const handleKeydown = (evt: React.KeyboardEvent) => {
+    if (evt.key === 'Enter') {
+      const disToTop = document.documentElement.scrollTop;
+      const heightOfScreen = document.documentElement.clientHeight;
 
-    // console.log('content', editor.getContents());
-    // console.log('html', editor.getHTML());
-    // console.log('text', editor.getText().includes('\n'));
-    // console.log('selection', editor.getSelection());
-    // console.log('content', editor.());
-    // console.log('content', editor.getContents());
+      const selection = window.getSelection();
+
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        const cursorDistanceFromBottom = document.documentElement.clientHeight - rect.bottom;
+        console.log('dis', range);
+        return cursorDistanceFromBottom;
+      }
+      return -1;
+
+      if (heightOfScreen - disToTop) {
+      }
+    }
+  };
+
+  const handleChangeEditor = (
+    value: string,
+    delta: unknown,
+    source: unknown,
+    editor: ReactQuillType.UnprivilegedEditor
+  ) => {
+    if (controllerRef.current.signal) {
+      controllerRef.current.abort();
+    }
+
     const valEditor = editor.getText();
 
-    console.log('change', valEditor.includes('<p>'));
-
-    // setContent(value.replaceAll(/<\/?p[^>]*>/g, '').replace('<br>', ''));
-
     handleBreakLine(value, editor.getSelection());
-
-    // if (!isChangeRef.current) {
-    //   isChangeRef.current = true;
-    //   console.log('return');
-    //   return;
-    // }
 
     const valCheck = valEditor.slice(0, valEditor.length - 1);
 
     if (!valEditor) return;
 
-    // handleRemoveTextError(value);
-
     previousRef.current = value;
-    // console.log(valEditor);
     setErrors([]);
     setContent(value);
 
@@ -227,9 +304,21 @@ const GrammarPage = () => {
       return;
     }
 
-    previousRef.current = renderToString(<ParagraphText activeError={activeError} data={content} onShowErrorDetail={handleActiveError} />);
+    previousRef.current = renderToString(
+      <ParagraphText
+        activeError={activeError}
+        data={content}
+        onShowErrorDetail={handleActiveError}
+      />
+    );
 
-    createRoot(root[0]).render(<ParagraphText activeError={activeError} data={content} onShowErrorDetail={handleActiveError} />);
+    createRoot(root[0]).render(
+      <ParagraphText
+        activeError={activeError}
+        data={content}
+        onShowErrorDetail={handleActiveError}
+      />
+    );
   };
 
   const debounceCheck = useCallback(debounce(handleCheckContent, 1000), []);
@@ -241,28 +330,6 @@ const GrammarPage = () => {
 
     setMarginTop(editorHeader.getBoundingClientRect().height);
   }, []);
-
-  useEffect(() => {
-    // handleUpdateContent(errors);
-  }, [activeError]);
-
-  // useEffect(() => {
-  //   const test =
-  //     '<p class="inline"><br></p><p class="inline">This</p><p class="inline"> a</p><p class="inline">is</p><p class="inline"> </p><p class="inline-block  " data-mark-id="7fcd2a32-6e8f-4b84-802c-cbbad65395bd">err</p>';
-
-  //   const root = document.getElementsByClassName('ql-editor');
-
-  //   const rootEle = createRoot(root[0]);
-  //   console.log('rrrr', rootEle );
-
-  //   rootEle.render(
-  //     <p
-  //       dangerouslySetInnerHTML={{
-  //         __html: test,
-  //       }}
-  //     ></p>
-  //   );
-  // }, []);
 
   return (
     <div className='h-screen flex'>
@@ -281,7 +348,11 @@ const GrammarPage = () => {
           {showAssistant ? (
             <h2 className='w-2/5 flex items-center justify-center text-lg font-semibold'>
               {totalSuggestions > 0 && (
-                <span className='inline-flex justify-center items-center mr-2 px-2 py-1 text-white text-xs bg-[#eb4034] rounded-full'>
+                <span
+                  className={`inline-flex justify-center items-center mr-2 text-white text-xs bg-[#eb4034] ${
+                    totalSuggestions > 9 ? 'px-[6px] py-[3px] rounded-lg' : 'w-6 h-6 rounded-full'
+                  }`}
+                >
                   {totalSuggestions}
                 </span>
               )}
@@ -291,16 +362,18 @@ const GrammarPage = () => {
             <div className={`${showAssistant ? 'hidden' : 'flex'}`}>
               <span
                 className='inline-flex items-center mr-4 text-xs uppercase font-medium text-gray-600 cursor-pointer'
-                // onClick={handleToggleAssistant}
+                onClick={handleToggleAssistant}
               >
                 {totalSuggestions > 0 && (
-                  <span className='inline-flex px-2 mr-1 text-white text-sm upp rounded-lg bg-[#eb4034]'>{totalSuggestions}</span>
+                  <span className='inline-flex px-2 mr-1 text-white text-sm upp rounded-lg bg-[#eb4034]'>
+                    {totalSuggestions}
+                  </span>
                 )}
                 Suggestions
               </span>
               <button
                 className={`group relative flex items-center justify-center w-52 bg-blue-600 text-white py-1.5 text-xs uppercase font-semibold tracking-wide rounded-3xl hover:bg-blue-500 transition-all`}
-                // onClick={handleToggleAssistant}
+                onClick={handleToggleAssistant}
               >
                 {isLoading ? 'Checking...' : 'Correct with assistant'}
                 {isLoading && (
@@ -314,18 +387,23 @@ const GrammarPage = () => {
         </header>
 
         <div className='min-h-[calc(100vh-64px)] relative pt-8 flex flex-col lg:flex-row lg:justify-between gap-8'>
-          <div id='editor' className={`relative mx-4 mb-5 z-10 outline-none rounded-lg ${showAssistant ? 'lg:w-1/2' : 'lg:w-3/4 mx-auto'}`}>
+          <div
+            id='editor'
+            className={`relative mx-4 mb-16 z-10 outline-none rounded-lg ${
+              showAssistant ? 'lg:w-1/2' : 'lg:w-3/4 mx-auto'
+            }`}
+          >
             <ReactQuill
               theme='snow'
-              className='h-full'
+              // className='h-full'
               modules={{
                 toolbar: [
-                  [{ header: '1' }, { header: '2' }, { font: [] }],
+                  [{ header: '1' }, { header: '2' }],
                   // [{ size: [] }],
                   ['bold', 'italic', 'underline'],
                   [{ list: 'ordered' }, { list: 'bullet' }],
                   ['link', 'image'],
-                  // ['clean'],
+                  ['clean'],
                 ],
                 clipboard: {
                   // toggle to add extra line breaks when pasting HTML:
@@ -364,7 +442,11 @@ const GrammarPage = () => {
                   marginTop: `${marginTop}px`,
                 }}
               >
-                <ParagraphText activeError={activeError} data={errors} onShowErrorDetail={handleActiveError} />
+                <ParagraphText
+                  activeError={activeError}
+                  data={errors}
+                  onShowErrorDetail={handleActiveError}
+                />
               </p>
             )}
           </div>
@@ -383,8 +465,12 @@ const GrammarPage = () => {
             {!content && (
               <div className='flex flex-col items-center self-center my-auto pb-40'>
                 <NothingSvgIcon />
-                <h3 className='text-lg font-semibold mt-4 mb-2 text-center'>Nothing to check yet!</h3>
-                <p className='text-gray-500 w-4/5 text-center'>Start writing or upload a document to see Grammar feedback.</p>
+                <h3 className='text-lg font-semibold mt-4 mb-2 text-center'>
+                  Nothing to check yet!
+                </h3>
+                <p className='text-gray-500 w-4/5 text-center'>
+                  Start writing or upload a document to see Grammar feedback.
+                </p>
               </div>
             )}
 
@@ -417,7 +503,7 @@ const GrammarPage = () => {
       >
         <button
           className='group relative flex items-center justify-center mx-auto mb-4 bg-gray-200 text-gray-500 px-4 py-1.5 text-xs uppercase font-semibold tracking-wide rounded-3xl hover:bg-gray-300 transition-colors'
-          // onClick={handleToggleAssistant}
+          onClick={handleToggleAssistant}
         >
           Hide Assistant
           <Image src={moveRightIcon} alt='Hide Assistant' className='w-3 h-3 text-white ml-1' />

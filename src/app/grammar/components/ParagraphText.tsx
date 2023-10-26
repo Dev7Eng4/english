@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { convertEmptyText, getStyleOfEmptyText, isEmpty } from '@/app/utils/text';
 import LineError from './LineError';
 
 interface Props {
@@ -7,36 +7,9 @@ interface Props {
   onShowErrorDetail: (id: number) => void;
 }
 
-//  (
-//           line.text === '\n' ? (
-//             <p className='initial'>
-//               <br />
-//             </p>
-//           ) :
-
 const ParagraphText = ({ data, activeError, onShowErrorDetail }: Props) => {
-  const renderEmpty = (value: string) => {
-    const arrItem = value.split(' ');
-
-    return arrItem.reduce((result: string, currValue: string, idx: number) => {
-      if (idx === arrItem.length - 1) {
-        return result;
-      }
-
-      return (result += '.');
-    }, '');
-  };
-
   return (
     <>
-      {/* <p className='inline-block bg-transparent border-b-2 border-red-300 text-transparent'>
-        This is paragraph error wtf
-      </p> */}
-      {/* {
-        data.reduce((res: any, line: ResponseText, idx: number) => {
-          const val = 
-        }, [])
-      } */}
       {data.map((line: ResponseText, idx: number) => {
         if (line.status === 'false')
           return (
@@ -50,16 +23,15 @@ const ParagraphText = ({ data, activeError, onShowErrorDetail }: Props) => {
 
         if (line.text === '\n') return <br />;
 
-        if (line.text.trim() === '')
-          return (
-            <p key={line.id} className='inline bg-transparent text-transparent'>
-              {renderEmpty(line.text)}
-            </p>
-          );
-
         return (
-          <p key={line.id} className='inline bg-transparent text-transparent'>
-            {line.text}
+          <p
+            key={line.id}
+            className={`inline bg-transparent text-transparent ${
+              isEmpty(line.text) && line.text.length === 1 ? 'w-1' : ''
+            }`}
+            // style={getStyleOfEmptyText(line.text)}
+          >
+            {isEmpty(line.text) ? convertEmptyText(line.text) : line.text}
           </p>
         );
       })}

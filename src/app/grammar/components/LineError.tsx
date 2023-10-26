@@ -1,4 +1,4 @@
-import React, { FormEvent } from 'react';
+import { isEmpty, renderEmptyText } from '@/app/utils/text';
 
 interface Props {
   error: ResponseText;
@@ -15,11 +15,11 @@ const LineError = ({ error, activeError, onShowErrorDetail }: Props) => {
     <p
       className={`inline relative border-b-2 border-red-500 text-transparent ${
         activeError === error.id ? 'bg-red-200 z-20' : 'bg-transparent z-50'
-      }`}
+      } ${isEmpty(error.text) && error.text.length === 1 ? 'w-1' : ''}`}
       onClick={handleShowDetail}
       data-mark-id={error.id}
     >
-      {error.text}
+      {isEmpty(error.text) ? renderEmptyText(error.text) : error.text}
     </p>
   );
 };

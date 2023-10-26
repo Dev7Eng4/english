@@ -1,3 +1,23 @@
+.quill {
+  // display: flex;
+  // flex-direction: column-reverse;
+  position: relative;
+
+  .ql-toolbar {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 31px;
+
+    border: none;
+    opacity: 0.7;
+  }
+
+  .ql-container {
+    border: none;
+  }
+}
+
 .ql-editor ~ grammarly-extension {
   display: none;
 }
