@@ -10,6 +10,7 @@ import dynamic from 'next/dynamic';
 import 'react-quill/dist/quill.snow.css';
 import ReactQuillType from 'react-quill';
 import parse from 'html-react-parser';
+import { clsx } from 'clsx';
 import { fetchCheckData } from '../services/api';
 import ParagraphText from '../grammar/components/ParagraphText';
 
@@ -46,10 +47,16 @@ const GrammarPage = () => {
   const previousRef = useRef('');
   const cursorPosRef = useRef(0);
   const controllerRef = useRef(new AbortController());
+  const disabledCheckRef = useRef(false);
 
   const isExistsError = useMemo(() => {
-    return errors.length > 0 && errors.findIndex(data => data.status === 'false') === -1;
+    return errors.length > 0 && errors.findIndex(data => data.status === 'false') !== -1;
   }, [errors]);
+
+  const isFixAll = useMemo(
+    () => errors.length > 0 && errors.findIndex(err => err.status === 'false') === -1,
+    [errors]
+  );
 
   const totalSuggestions = useMemo(() => {
     return errors.filter(data => data.status === 'false').length;
@@ -61,27 +68,38 @@ const GrammarPage = () => {
   };
 
   const handleFixError = (error: ResponseText) => {
+    // setContent('<p>This is nbsp;nbsp;nbsp;a sente</p>');
+    // return;
+    console.log('cotettt', content);
     const idxFixError = errors.findIndex(data => data.id === error.id);
     const fixedText = `${error.revised_sentence}${isInsertError(error) ? '' : ''}`;
 
     if (idxFixError === -1) return;
 
-    let posFix = isInsertError(error) || isRemoveError(error) ? 3 : 3;
+    disabledCheckRef.current = true;
 
-    console.log('idx', content.includes('</p>'));
+    let posFix = 0;
 
     const fixedData = errors.reduce(
       (result: ResponseText[], currError: ResponseText, idx: number) => {
         if (idxFixError > idx) {
-          const dis =
-            currError.text === '\n'
-              ? 7
-              : currError.text.length -
-                (isInsertError(currError) || isRemoveError(currError) ? 1 : 0);
-          posFix = posFix + dis;
-          console.log('idddd', idx);
-          console.log('data', currError);
-          console.log('id', posFix);
+          let distance = 0;
+          if (currError.text === '\n') {
+            const previousError = errors[idx - 1]?.text;
+            const nextError = errors[idx - 1]?.text;
+            if (previousError === '\n' && nextError === '\n') distance = 11;
+            if (
+              (previousError !== '\n' && nextError === '\n') ||
+              (previousError === '\n' && nextError !== '\n')
+            )
+              distance = 4;
+            distance = 7;
+          } else {
+            distance =
+              currError.text.length -
+              (isInsertError(currError) || isRemoveError(currError) ? 1 : 0);
+          }
+          posFix = posFix + distance;
         }
 
         if (isRemoveError(error) && idxFixError + 1 === idx) {
@@ -108,61 +126,33 @@ const GrammarPage = () => {
       []
     );
 
-    // const fixedData = errors.map((data, idx) => {
-    //   if (idxFixError > idx) {
-    //     const dis =
-    //       data.text === '\n'
-    //         ? 7
-    //         : data.text.length - (isInsertError(data) || isRemoveError(data) ? 1 : 0);
-    //     posFix = posFix + dis;
-    //     console.log('idddd', idx);
-    //     console.log('data', data);
-    //     console.log('id', posFix);
-    //   }
+    const contentWithOutEle = content.slice(3, content.length - 4);
 
-    //   return data.id === error.id
-    //     ? {
-    //         ...error,
-    //         status: 'true',
-    //         text: fixedText,
-    //       }
-    //     : data;
-    // });
-
-    console.log(
-      'ddd',
-      // content
-      //   .slice(posFix)
-      //   .indexOf(
-      `${isInsertError(error) ? ' ' : ''}${error.text}${isRemoveError(error) ? ' ' : ''}`
-      // )
-    );
-    console.log('ddd', isInsertError(error));
-    console.log('pos', fixedText);
-    console.log('ee', content.slice(0, posFix));
-    console.log(
-      'bbb',
-      content
+    const fixedContent =
+      contentWithOutEle.slice(0, posFix) +
+      contentWithOutEle
         .slice(posFix)
         .replace(
-          `${isInsertError(error) ? ' ' : ''}${error.text}${isRemoveError(error) ? ' ' : ''}`,
-          fixedText
-        )
-    );
-
-    const newContent =
-      content.slice(0, posFix) +
-      content
-        .slice(posFix)
-        .replace(
-          `${error.text}${isRemoveError(error) ? ' ' : ''}`,
-          `${isInsertError(error) ? ' ' : ''}${fixedText}`
+          `${error.text}${isRemoveError(error) ? '' : ''}`,
+          `${isInsertError(error) ? '' : ''}${fixedText}`
         );
 
-    console.log('cconte', newContent);
-
-    setContent(newContent);
+    console.log('aaa', fixedContent);
+    console.log('bbb', fixedData);
+    setContent(`<p>${fixedContent}</p>`);
     setErrors(fixedData);
+    setActiveError(-1);
+  };
+
+  const handleFixAllErrors = () => {
+    const fixedContent = errors.reduce(
+      (content: string, err: ResponseText) => content + err.revised_sentence,
+      ''
+    );
+
+    console.log('content', fixedContent);
+    setContent(`<p>${fixedContent}</p>`);
+    setErrors([]);
     setActiveError(-1);
   };
 
@@ -201,8 +191,6 @@ const GrammarPage = () => {
 
   const handleCheckContent = async (value: string) => {
     try {
-      // const editor = document.querySelector('.ck-editor__editable');
-
       setIsLoading(true);
 
       if (controllerRef.current.signal) {
@@ -215,28 +203,11 @@ const GrammarPage = () => {
 
       const res = await fetchCheckData(value, controller.signal);
 
-      // setContent(renderToString(<ParagraphText activeError={-1} data={res} onShowErrorDetail={() => {}} />));
-      // handleUpdateContent(res);
-
       setErrors(res);
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
     }
-  };
-
-  const handleRemoveTextError = (value: string) => {
-    const newContent = value.replaceAll('error-line', '');
-
-    if (newContent !== value) {
-      handleUpdateContent(value.replaceAll('inline-block', ''));
-    }
-  };
-
-  const handleBreakLine = (currentValue: string, selection: any) => {
-    // console.log('curre', currentValue);
-    // console.log('pre', previousRef.current);
-    // console.log('diff', diff(currentValue, previousRef.current));
   };
 
   const handleToggleAssistant = () => {
@@ -270,13 +241,16 @@ const GrammarPage = () => {
     source: unknown,
     editor: ReactQuillType.UnprivilegedEditor
   ) => {
+    // if (disabledCheckRef.current) {
+    //   disabledCheckRef.current = false;
+    //   return;
+    // }
+
     if (controllerRef.current.signal) {
       controllerRef.current.abort();
     }
 
     const valEditor = editor.getText();
-
-    handleBreakLine(value, editor.getSelection());
 
     const valCheck = valEditor.slice(0, valEditor.length - 1);
 
@@ -331,6 +305,8 @@ const GrammarPage = () => {
     setMarginTop(editorHeader.getBoundingClientRect().height);
   }, []);
 
+  console.log('errors', errors);
+
   return (
     <div className='h-screen flex'>
       <div
@@ -346,22 +322,41 @@ const GrammarPage = () => {
           </div>
 
           {showAssistant ? (
-            <h2 className='w-2/5 flex items-center justify-center text-lg font-semibold'>
+            <div className={clsx('flex items-center justify-between pl-8 pr-4 lg:w-2/5')}>
+              <div className='hidden text-sm font-semibold lg:block'>
+                {totalSuggestions > 0 && (
+                  <span
+                    className={`inline-flex justify-center items-center mr-2 text-white text-xs bg-[#eb4034] ${
+                      totalSuggestions > 9 ? 'px-[6px] py-[3px] rounded-lg' : 'w-6 h-6 rounded-full'
+                    }`}
+                  >
+                    {totalSuggestions}
+                  </span>
+                )}
+                All suggestions
+              </div>
+
               {totalSuggestions > 0 && (
-                <span
-                  className={`inline-flex justify-center items-center mr-2 text-white text-xs bg-[#eb4034] ${
-                    totalSuggestions > 9 ? 'px-[6px] py-[3px] rounded-lg' : 'w-6 h-6 rounded-full'
-                  }`}
+                <button
+                  className='block px-4 py-1.5 bg-blue-600 rounded-full text-xs font-bold text-white transition-colors hover:bg-blue-500'
+                  onClick={handleFixAllErrors}
                 >
-                  {totalSuggestions}
-                </span>
+                  Fix All Errors
+                </button>
               )}
-              All suggestions
-            </h2>
+            </div>
           ) : (
             <div className={`${showAssistant ? 'hidden' : 'flex'}`}>
+              {totalSuggestions > 0 && (
+                <button
+                  className='block px-4 py-1.5 bg-blue-600 rounded-full text-xs font-bold text-white transition-colors hover:bg-blue-500'
+                  onClick={handleFixAllErrors}
+                >
+                  Fix All Errors
+                </button>
+              )}
               <span
-                className='inline-flex items-center mr-4 text-xs uppercase font-medium text-gray-600 cursor-pointer'
+                className='hidden items-center mr-4 text-xs uppercase font-medium text-gray-600 cursor-pointer lg:inline-flex'
                 onClick={handleToggleAssistant}
               >
                 {totalSuggestions > 0 && (
@@ -386,16 +381,17 @@ const GrammarPage = () => {
           )}
         </header>
 
-        <div className='min-h-[calc(100vh-64px)] relative pt-8 flex flex-col lg:flex-row lg:justify-between gap-8'>
+        <div className='min-h-[calc(100vh-64px)] relative flex flex-col lg:flex-row lg:justify-between gap-8'>
           <div
             id='editor'
-            className={`relative mx-4 mb-16 z-10 outline-none rounded-lg ${
+            className={`relative mt-4 mx-4 mb-8 z-10 outline-none rounded-lg ${
               showAssistant ? 'lg:w-1/2' : 'lg:w-3/4 mx-auto'
             }`}
           >
             <ReactQuill
               theme='snow'
               // className='h-full'
+              preserveWhitespace={true}
               modules={{
                 toolbar: [
                   [{ header: '1' }, { header: '2' }],
@@ -435,9 +431,9 @@ const GrammarPage = () => {
             />
 
             {errors.length > 0 && (
-              <p
+              <div
                 id='paragraph-error'
-                className='absolute py-3 px-[15px] inset-0 bg-transparent text-sm'
+                className='absolute py-3 px-[15px] inset-0 bg-transparent text-sm leading-[26px]'
                 style={{
                   marginTop: `${marginTop}px`,
                 }}
@@ -447,23 +443,25 @@ const GrammarPage = () => {
                   data={errors}
                   onShowErrorDetail={handleActiveError}
                 />
-              </p>
+              </div>
             )}
           </div>
 
           <div
-            className={`sticky top-[114px] max-h-[calc(100vh-114px)] overflow-auto scrollbar-invisible p-4 pb-6 pr-8 flex flex-col ${
+            className={clsx(
+              'pl-4 pr-8 flex-col lg:flex',
               showAssistant ? 'lg:w-2/5' : 'lg:w-0 hidden'
-            }`}
+              // isExistsError && 'sticky top-[114px] lg:max-h-[calc(100vh-114px)]'
+            )}
           >
             {isLoading && errors.length === 0 && (
-              <div className='flex justify-center mt-8'>
+              <div className='flex justify-center mt-14'>
                 <Image priority src={loadingIcon} alt='Checking content...' className='w-20 h-20' />
               </div>
             )}
 
             {!content && (
-              <div className='flex flex-col items-center self-center my-auto pb-40'>
+              <div className='flex flex-col items-center self-center my-auto pb-16'>
                 <NothingSvgIcon />
                 <h3 className='text-lg font-semibold mt-4 mb-2 text-center'>
                   Nothing to check yet!
@@ -474,24 +472,28 @@ const GrammarPage = () => {
               </div>
             )}
 
-            {isExistsError && (
-              <div className='flex flex-col items-center self-center my-auto pb-40'>
+            {isFixAll && (
+              <div className='flex flex-col items-center self-center my-auto pb-16'>
                 <CorrectSvgIcon />
                 <h3 className='mt-4 text-lg font-semibold mb-2 text-center'>You are good to go</h3>
               </div>
             )}
 
-            {errors
-              .filter(data => data.status === 'false')
-              .map(error => (
-                <Suggestion
-                  key={error.id}
-                  activeError={activeError}
-                  error={error}
-                  onFixError={handleFixError}
-                  onShowDetailError={handleShowDetailError}
-                />
-              ))}
+            {isExistsError && (
+              <div className='h-[calc(100vh-64px)] pb-5 overflow-auto scrollbar-invisible'>
+                {errors
+                  .filter(data => data.status === 'false')
+                  .map(error => (
+                    <Suggestion
+                      key={error.id}
+                      activeError={activeError}
+                      error={error}
+                      onFixError={handleFixError}
+                      onShowDetailError={handleShowDetailError}
+                    />
+                  ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -502,7 +504,7 @@ const GrammarPage = () => {
         }`}
       >
         <button
-          className='group relative flex items-center justify-center mx-auto mb-4 bg-gray-200 text-gray-500 px-4 py-1.5 text-xs uppercase font-semibold tracking-wide rounded-3xl hover:bg-gray-300 transition-colors'
+          className='group relative flex items-center justify-center mx-auto mb-4 bg-gray-200 text-gray-500 px-4 py-1.5 text-[10px] uppercase font-semibold tracking-wide rounded-3xl hover:bg-gray-300 transition-colors'
           onClick={handleToggleAssistant}
         >
           Hide Assistant

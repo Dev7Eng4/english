@@ -183,7 +183,7 @@ const GoalSetting = () => {
         className='group flex items-center justify-between pl-4 pr-2 py-2 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-100'
         onClick={handleOpenGoalSettings}
       >
-        <div>
+        <div className='text-[13px]'>
           <span className='font-medium'>Goals</span>
           <br />
           <span>{numberOfSettings} of 4 set</span>
@@ -191,7 +191,7 @@ const GoalSetting = () => {
         <Image
           src={rightArrowIcon}
           alt='Right Arrow'
-          className='w-6 h-6 group-hover:text-blue-300'
+          className='w-5 h-5 group-hover:text-blue-300'
         />
       </div>
 

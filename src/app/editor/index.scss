@@ -15,6 +15,7 @@
 
   .ql-container {
     border: none;
+    font-family: inherit;
   }
 }
 
@@ -38,5 +39,6 @@
   font-size: 14px;
   position: relative;
   z-index: 40;
-  font-family: Arial, sans-serif;
+  line-height: 26px;
+  // font-family: Inter, Arial, sans-serif;
 }

@@ -10,7 +10,6 @@ interface Props {
 const FixError = ({ activedError, err, handleFixError, handleShowDetailError }: Props) => {
   if (!err.status) return <>{err.text}</>;
 
-  console.log('a');
   const isActive = activedError === err.id;
 
   return (

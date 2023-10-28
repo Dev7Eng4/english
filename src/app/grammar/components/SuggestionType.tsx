@@ -35,7 +35,7 @@ const SuggestionType = () => {
   };
 
   return (
-    <div className='flex flex-col gap-y-2'>
+    <div className='flex flex-col gap-y-2 text-[13px]'>
       <div
         className={`group flex items-center justify-between p-4 rounded-md font-medium cursor-pointer border transition-all hover:bg-gray-100 ${
           suggestion ? 'border-white' : 'border-blue-600 text-blue-600'
@@ -59,7 +59,9 @@ const SuggestionType = () => {
           </span>
           <div className='mt-2 w-full bg-gray-200 rounded-full h-1 dark:bg-gray-700'>
             <div
-              className={`h-1 rounded-full bg-[${sgType.color}] w-[${sgType.percentCorrect ?? '100'}%]`}
+              className={`h-1 rounded-full bg-[${sgType.color}] w-[${
+                sgType.percentCorrect ?? '100'
+              }%]`}
               style={{
                 backgroundColor: sgType.color,
               }}
