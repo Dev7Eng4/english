@@ -53,10 +53,7 @@ const GrammarPage = () => {
     return errors.length > 0 && errors.findIndex(data => data.status === 'false') !== -1;
   }, [errors]);
 
-  const isFixAll = useMemo(
-    () => errors.length > 0 && errors.findIndex(err => err.status === 'false') === -1,
-    [errors]
-  );
+  const isFixAll = useMemo(() => errors.length > 0 && errors.findIndex(err => err.status === 'false') === -1, [errors]);
 
   const totalSuggestions = useMemo(() => {
     return errors.filter(data => data.status === 'false').length;
@@ -79,63 +76,60 @@ const GrammarPage = () => {
     disabledCheckRef.current = true;
 
     let posFix = 0;
+    console.log('content before', content);
 
-    const fixedData = errors.reduce(
-      (result: ResponseText[], currError: ResponseText, idx: number) => {
-        if (idxFixError > idx) {
-          let distance = 0;
-          if (currError.text === '\n') {
-            const previousError = errors[idx - 1]?.text;
-            const nextError = errors[idx - 1]?.text;
-            if (previousError === '\n' && nextError === '\n') distance = 11;
-            if (
-              (previousError !== '\n' && nextError === '\n') ||
-              (previousError === '\n' && nextError !== '\n')
-            )
-              distance = 4;
-            distance = 7;
+    const fixedData = errors.reduce((result: ResponseText[], currError: ResponseText, idx: number) => {
+      if (idxFixError > idx) {
+        let distance = 0;
+        if (currError.text === '\n') {
+          const previousError = errors[idx - 1]?.text;
+          const nextError = errors[idx - 1]?.text;
+          if (previousError === '\n' && nextError === '\n') {
+            distance = 11;
+          } else if (previousError === '\n' && nextError !== '\n') {
+            distance = 14;
+          } else if (previousError !== '\n' && nextError === '\n') {
+            distance = 4;
           } else {
-            distance =
-              currError.text.length -
-              (isInsertError(currError) || isRemoveError(currError) ? 1 : 0);
+            distance = 7;
           }
-          posFix = posFix + distance;
+        } else {
+          distance = currError.text.length - (isInsertError(currError) || isRemoveError(currError) ? 1 : 0);
         }
+        console.log('dis', distance);
+        posFix = posFix + distance;
+      }
 
-        if (isRemoveError(error) && idxFixError + 1 === idx) {
-          return [
-            ...result,
-            {
-              ...currError,
-              text: '',
-            },
-          ];
-        }
-
+      if (isRemoveError(error) && idxFixError + 1 === idx) {
         return [
           ...result,
-          currError.id === error.id
-            ? {
-                ...error,
-                status: 'true',
-                text: fixedText,
-              }
-            : currError,
+          {
+            ...currError,
+            text: '',
+          },
         ];
-      },
-      []
-    );
+      }
 
+      return [
+        ...result,
+        currError.id === error.id
+          ? {
+              ...error,
+              status: 'true',
+              text: fixedText,
+            }
+          : currError,
+      ];
+    }, []);
+
+    console.log('pos', posFix);
     const contentWithOutEle = content.slice(3, content.length - 4);
 
     const fixedContent =
       contentWithOutEle.slice(0, posFix) +
       contentWithOutEle
         .slice(posFix)
-        .replace(
-          `${error.text}${isRemoveError(error) ? '' : ''}`,
-          `${isInsertError(error) ? '' : ''}${fixedText}`
-        );
+        .replace(`${error.text}${isRemoveError(error) ? '' : ''}`, `${isInsertError(error) ? '' : ''}${fixedText}`);
 
     console.log('aaa', fixedContent);
     console.log('bbb', fixedData);
@@ -145,10 +139,7 @@ const GrammarPage = () => {
   };
 
   const handleFixAllErrors = () => {
-    const fixedContent = errors.reduce(
-      (content: string, err: ResponseText) => content + err.revised_sentence,
-      ''
-    );
+    const fixedContent = errors.reduce((content: string, err: ResponseText) => content + err.revised_sentence, '');
 
     console.log('content', fixedContent);
     setContent(`<p>${fixedContent}</p>`);
@@ -235,12 +226,7 @@ const GrammarPage = () => {
     }
   };
 
-  const handleChangeEditor = (
-    value: string,
-    delta: unknown,
-    source: unknown,
-    editor: ReactQuillType.UnprivilegedEditor
-  ) => {
+  const handleChangeEditor = (value: string, delta: unknown, source: unknown, editor: ReactQuillType.UnprivilegedEditor) => {
     // if (disabledCheckRef.current) {
     //   disabledCheckRef.current = false;
     //   return;
@@ -278,21 +264,9 @@ const GrammarPage = () => {
       return;
     }
 
-    previousRef.current = renderToString(
-      <ParagraphText
-        activeError={activeError}
-        data={content}
-        onShowErrorDetail={handleActiveError}
-      />
-    );
+    previousRef.current = renderToString(<ParagraphText activeError={activeError} data={content} onShowErrorDetail={handleActiveError} />);
 
-    createRoot(root[0]).render(
-      <ParagraphText
-        activeError={activeError}
-        data={content}
-        onShowErrorDetail={handleActiveError}
-      />
-    );
+    createRoot(root[0]).render(<ParagraphText activeError={activeError} data={content} onShowErrorDetail={handleActiveError} />);
   };
 
   const debounceCheck = useCallback(debounce(handleCheckContent, 1000), []);
@@ -360,9 +334,7 @@ const GrammarPage = () => {
                 onClick={handleToggleAssistant}
               >
                 {totalSuggestions > 0 && (
-                  <span className='inline-flex px-2 mr-1 text-white text-sm upp rounded-lg bg-[#eb4034]'>
-                    {totalSuggestions}
-                  </span>
+                  <span className='inline-flex px-2 mr-1 text-white text-sm upp rounded-lg bg-[#eb4034]'>{totalSuggestions}</span>
                 )}
                 Suggestions
               </span>
@@ -384,9 +356,7 @@ const GrammarPage = () => {
         <div className='min-h-[calc(100vh-64px)] relative flex flex-col lg:flex-row lg:justify-between gap-8'>
           <div
             id='editor'
-            className={`relative mt-4 mx-4 mb-8 z-10 outline-none rounded-lg ${
-              showAssistant ? 'lg:w-1/2' : 'lg:w-3/4 mx-auto'
-            }`}
+            className={`relative mt-4 mx-4 mb-8 z-10 outline-none rounded-lg ${showAssistant ? 'lg:w-1/2' : 'lg:w-3/4 mx-auto'}`}
           >
             <ReactQuill
               theme='snow'
@@ -438,11 +408,7 @@ const GrammarPage = () => {
                   marginTop: `${marginTop}px`,
                 }}
               >
-                <ParagraphText
-                  activeError={activeError}
-                  data={errors}
-                  onShowErrorDetail={handleActiveError}
-                />
+                <ParagraphText activeError={activeError} data={errors} onShowErrorDetail={handleActiveError} />
               </div>
             )}
           </div>
@@ -463,12 +429,8 @@ const GrammarPage = () => {
             {!content && (
               <div className='flex flex-col items-center self-center my-auto pb-16'>
                 <NothingSvgIcon />
-                <h3 className='text-lg font-semibold mt-4 mb-2 text-center'>
-                  Nothing to check yet!
-                </h3>
-                <p className='text-gray-500 w-4/5 text-center'>
-                  Start writing or upload a document to see Grammar feedback.
-                </p>
+                <h3 className='text-lg font-semibold mt-4 mb-2 text-center'>Nothing to check yet!</h3>
+                <p className='text-gray-500 w-4/5 text-center'>Start writing or upload a document to see Grammar feedback.</p>
               </div>
             )}
 
